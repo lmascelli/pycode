@@ -267,7 +267,6 @@ pub mod logisi {
         // find the max peak before the ISI_THRESHOLD
         let mut intra_index: isize = -1;
         let mut intra_value = f32::MIN;
-        let mut intra_range = -1f32;
         let mut last_peak_index: isize = -1;
 
         for i in 0..found_peaks.0.len() {
@@ -279,7 +278,6 @@ pub mod logisi {
                 if value > intra_value {
                     intra_index = index as isize;
                     intra_value = value;
-                    intra_range = range;
                     last_peak_index = i as isize;
                 }
             } else {
@@ -319,7 +317,6 @@ pub mod logisi {
         // TODO check if it just returns the FIRST found minimum that overcome the void_threshold
         for i in intra_index as usize + 1..found_peaks.0.len() {
             let value = hist_values[i];
-            let range = ranges[i];
 
             // check if the current value is a minima
             if value < current_minima {
@@ -356,21 +353,19 @@ pub mod logisi {
             ));
     }
 
+    /// Find the bursts in a peak train
+    /// the `burst_data` is a mutable tuple of three arrays with the begin and the end
     pub fn find_burst(
         peak_train: &[usize],
         min_ibi: f32,
         min_durn: f32,
         min_spikes: usize,
         isi_low: f32,
+        burst_data: &mut (Vec<usize>, Vec<usize>),
     ) -> Result<(), super::SpikeError> {
         // Create a temp array for the storage of the bursts.  Assume that
         // it will not be longer than Nspikes/2 since we need at least two
         // spikes to be in a burst.
-
-        let max_burst = peak_train.len() / 2;
-        let mut burst_start = vec![0usize; max_burst];
-        let mut burst_end = vec![0usize; max_burst];
-        let mut burst_isi = vec![0usize; max_burst];
 
         // 1. Each interspike interval of the data is compared with the threshold
         // THRE. If the interval is greater than the threshold value, it can not be
@@ -379,13 +374,18 @@ pub mod logisi {
 
         const EPSILON: f32 = 1e-10;
         let mut in_burst = false;
-        let mut n = 2;
+        let mut n = 1;
 
         let mut beg = n;
         let mut end = n - 1;
 
         let mut last_end = None;
         let mut ibi = 0;
+
+        let max_burst = peak_train.len() / 2;
+
+        let burst_start = &mut burst_data.0;
+        let burst_end = &mut burst_data.1;
 
         while n < peak_train.len() {
             // TODO(performace increase) avoid recomputing the isi using directly the
@@ -408,7 +408,6 @@ pub mod logisi {
                     // add the burst to the return lists
                     burst_start.push(beg);
                     burst_end.push(end);
-                    burst_isi.push(ibi);
                     if burst_start.len() > max_burst {
                         return Err(super::SpikeError::LogISIFindBurstTooManyBursts);
                     }
@@ -425,40 +424,108 @@ pub mod logisi {
         Ok(())
     }
 
+    /// Add the bursts from burst_2 to burst_1 and check for overlapping bursts
+    pub fn add_burst(
+        burst_1: &mut (Vec<usize>, Vec<usize>),
+        burst_2: &(Vec<usize>, Vec<usize>),
+        spike_train: &[usize],
+    ) -> Result<(), super::SpikeError> {
+        let mut new_burst_data = (vec![0usize; burst_1.0.len()], vec![0usize; burst_1.0.len()]);
+
+        for i in 0..burst_1.0.len() {
+            let beg1 = burst_1.0[i];
+            let end1 = burst_1.1[i];
+            for j in 0..burst_2.0.len() {
+                let beg2 = burst_2.0[j];
+                let end2 = burst_2.1[j];
+                if (beg1 >= beg2 && beg1 <= end2) || (end1 >= beg1 && end1 <= end2) {
+                    // TODO check if the burst is a duplicate of one that already exists
+                    new_burst_data.0[i] = if beg1 < beg2 { beg1 } else { beg2 };
+                    new_burst_data.1[i] = if end1 < end2 { end1 } else { end2 };
+                    break;
+                } else {
+                    // TODO check if the burst is a duplicate of one that already exists
+                    new_burst_data.0[i] = burst_1.0[i];
+                    new_burst_data.1[i] = burst_1.1[i];
+                }
+                // TODO check this condition
+                if burst_1.1[i] <= burst_2.1[j] {
+                    break;
+                }
+            }
+        }
+        Ok(())
+    }
+
     // TODO handle the default value of cutoff to be 0.1
-    pub fn detect_bursts(
+    pub fn burst_detection(
         peak_train: &[usize],
         sampling_frequency: f32,
         cutoff: f32,
-    ) -> Result<(), super::SpikeError> {
+    ) -> Result<(Vec<usize>, Vec<usize>), super::SpikeError> {
         if peak_train.len() <= 3 {
             return Err(super::SpikeError::LogISITooFewSamples);
         }
 
         // find burst parameters
-        let min_ibi;
         let min_durn = 0f32;
         let min_spikes = 3;
-        let isi_low;
+
+        let max_burst = peak_train.len() / 2;
+
+        let mut burst_data = (vec![0usize; max_burst], vec![0usize; max_burst]);
 
         // calculate the isi threshold and consequentely set the find burst parameters
         let isi_threshold = calc_threshold(peak_train, sampling_frequency)?;
+
         // Cases to handle:
         // - log_threshold > 1
         // - cutoff < log_threshold < 1
         // - log_threshold < 0 (i'm not sure if it's necessary to handle this)
         // - other cases
         if isi_threshold > 1f32 {
-            min_ibi = 0f32;
-            isi_low = cutoff;
-        } else if isi_threshold >= cutoff && isi_threshold <= 1f32 {
-            min_ibi = isi_threshold;
-            isi_low = cutoff;
+            find_burst(
+                peak_train,
+                0f32, // min_ibi
+                min_durn,
+                min_spikes,
+                cutoff, // isi_low
+                &mut burst_data,
+            )?;
+        } else if isi_threshold > cutoff && isi_threshold < 1f32 {
+            find_burst(
+                peak_train,
+                isi_threshold, // min_ibi
+                min_durn,
+                min_spikes,
+                cutoff, // isi_low
+                &mut burst_data,
+            )?;
+            // after the first detection of bursts if some spike has been found after that the
+            // parameters must be changed to min_ibi = 0 and isi_low = isi_threshold and the new
+            // burst must be added to the previous ones
+            let mut burst_data_2 = (vec![0usize; max_burst], vec![0usize; max_burst]);
+            find_burst(
+                peak_train,
+                0f32, // min_ibi
+                min_durn,
+                min_spikes,
+                isi_threshold, // isi_low
+                &mut burst_data_2,
+            )?;
+
+            add_burst(&mut burst_data, &burst_data_2, peak_train)?;
         } else {
-            min_ibi = 0f32;
-            isi_low = isi_threshold;
+            find_burst(
+                peak_train,
+                0f32, // min_ibi
+                min_durn,
+                min_spikes,
+                isi_threshold, // isi_low
+                &mut burst_data,
+            )?;
         }
 
-        find_burst(peak_train, min_ibi, min_durn, min_spikes, isi_low)
+        return Ok(burst_data);
     }
 }
