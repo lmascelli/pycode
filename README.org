@@ -78,7 +78,7 @@ Once you have a python interpreter installed lets create a virtual environment w
 #+begin_example shell
  python -m venv .venv
   .venv/Scripts/Activate.ps1
-  pip install maturin numpy matplotlib scipy
+  pip install maturin numpy matplotlib scipy cmake
 #+end_example
 
 With maturin installed and the virtual environment enabled build the python library is easy as:
