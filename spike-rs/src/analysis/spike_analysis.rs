@@ -343,14 +343,13 @@ pub mod logisi {
 
         const VOID_THRESHOLD: f32 = 0.7;
 
-        return found_mins
+        found_mins
             .iter()
-            .filter(|min| min.2 > VOID_THRESHOLD)
-            .next()
+            .find(|min| min.2 > VOID_THRESHOLD)
             .map(|min| Ok(ranges[min.0] / 1000.))
             .unwrap_or(Err(
                 super::SpikeError::LogISICalcThresholdNoMinWithRequiredVoidParameter,
-            ));
+            ))
     }
 
     /// Find the bursts in a peak train
@@ -380,7 +379,6 @@ pub mod logisi {
         let mut end = n - 1;
 
         let mut last_end = None;
-        let mut ibi = 0;
 
         let max_burst = peak_train.len() / 2;
 
@@ -400,9 +398,6 @@ pub mod logisi {
 
                     // if an other burst has been found before calculate the IBI
                     // and update the last burst time
-                    if last_end.is_some() {
-                        ibi = peak_train[beg] - last_end.unwrap();
-                    }
                     last_end.replace(peak_train[end]);
 
                     // add the burst to the return lists
@@ -428,7 +423,6 @@ pub mod logisi {
     pub fn add_burst(
         burst_1: &mut (Vec<usize>, Vec<usize>),
         burst_2: &(Vec<usize>, Vec<usize>),
-        spike_train: &[usize],
     ) -> Result<(), super::SpikeError> {
         let mut new_burst_data = (vec![0usize; burst_1.0.len()], vec![0usize; burst_1.0.len()]);
 
@@ -514,7 +508,7 @@ pub mod logisi {
                 &mut burst_data_2,
             )?;
 
-            add_burst(&mut burst_data, &burst_data_2, peak_train)?;
+            add_burst(&mut burst_data, &burst_data_2)?;
         } else {
             find_burst(
                 peak_train,
@@ -526,6 +520,6 @@ pub mod logisi {
             )?;
         }
 
-        return Ok(burst_data);
+        Ok(burst_data)
     }
 }

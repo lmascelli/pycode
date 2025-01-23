@@ -3,68 +3,94 @@
 #+date: <2024-02-12 Mon> 
 
 * Introduction
-The goal of this project is to provide a fast library for the computational part of the analysis, like
-the conversion of the ADC data, the spikes detection and any sort of operation with data that requires
-iterating through them.
-The library is meant to hold the data and to be accessed via Python, requiring some operation and
-getting back the results.
-At the moment a GUI in Python is provided with the library so that the workflow can be managed easily
-but in the future also a Python API is planned so that any user will be able to customize his analysis
-the way he likes.
 
-* Spike-rs
-Spike-rs is the name of the core library. It's written in Rust, a modern and safe alternative to C/C++
-that provide the same performance but also guards against some common mistakes and also provides nice
-compilations error.
-Almost all the code is (at the moment) build just on standard library. The only requirement are related
-to the operations with hdf5 datas, for which a build type dependency
-([[https://github.com/rust-lang/rust-bindgen][bindgen.rs]]) is needed; anyway this tool is provided by
-the rust development team as well, so it's hopefully going to be supported in the long time. 
-Also, for the creation of the Python wrapper an external dependency [[https://pyo3.rs][PyO3]] is being used.
+The goal of this project is to provide a fast library for the computational
+part of the analysis, like the conversion of the ADC data, the spikes
+detection and any sort of operation with data that requires iterating through
+them. The core of the library is written in Rust but it's then wrapped in a
+Python module to be easily used in an analisys workflow.
 
-** Build instruction
-*** Requirements
+At the moment no GUI is provided with the library but a collection of example
+scripts will be provided to be modified as needed.
+
+* Structure of the project
+
+The library itself it's composed of three components:
+
+- *spike-rs*: written in Rust, a modern and safe alternative to C/C++ that
+  provide the same performance but also avoids some common mistakes and
+  provides nice compilation errors. Almost all the code is build just on
+  standard library.
+
+- *c_pycode*: written in pure C, it's responsible for all the operations on
+  I/O with the stored data. It's linked with the hdf5 library.
+
+- *pycode*: That's the actual python library that wraps the C and Rust
+  functions. For the creation of the Python wrapper an external dependency
+  [[https://pyo3.rs][PyO3]] is being used.
+
+* Build instruction
+** Requirements
+
 To build the library you'll need:
 - the *rust* toolchain installed: [[https://www.rust-lang.org/tools/install][Rust download]]
-- the llvm toolchain installed (for bindgen automatic bindings generation)
+- a C compiler compatible with the hdf5 library (usually MSVC on Windows and
+    gcc on Linux)
+- *hdf5* library: [[https://github.com/HDFGroup/hdf5/releases/latest][hdf5 download]] 
+    (unzip it in a folder: you'll need that path later)
+- a python interpreter
+  
 *Windows*
-run this command on a shell (i.e. Powershell)
-#+begin_src shell
-  winget install -e --id LLVM.LLVM
-#+end_src
+Installing the Rust toolchain should be enough to get bot the rust and the c
+tools needed. There are several python distribution like 
+WinPython]] or [[https://www.anaconda.com/][Anaconda]].
+Choose the one you prefer.
+
 *Linux*
-it depends on you distro
-- *python*
-/Windows/
-#+begin_src shell
-  winget install -e --id Python.Python.3.11
-#+end_src
-- *hdf5* library
-[[https://github.com/HDFGroup/hdf5/releases/latest][hdf5 download]]
-and unzip it in a folder (you'll need that path later)
+Depending on you distro you can install the rust toolchain with your
+package manager or by using the install script from the rust project.
+Usually both the c compiler and a python environment are already bundle in
+the linux installation.
 
-*** Set the environment variables
-To compile the library the path of the hdf5 binaries and include files are needed. So you'll need
-to set those environment variables
+** Set the environment variables
 
-  *HDF5_LIB_DIR*
-\\
-  *HDF5_INCLUDE_DIR*
+To compile the library the path of the hdf5 binaries and include files are
+needed. So you'll need to set those environment variables:
+  
+  - *HDF5_LIB_DIR*: path of the /lib/ directory of the downloaded hdf5
+    library
 
-and point that variables to the /lib/ and /include/ directories of the previously unzipped hdf5 archive.
-You can alternatively change the values of the /build.ps1/ script if you want to use it to build the
-code.
+  - *HDF5_INCLUDE_DIR*:  path of the /include/ directory of the downloaded
+    hdf5 library
 
-*** Build the cargo project
-#+begin_src shell
-  cargo build --release
-#+end_src
+    For testing purpose there is a /build.ps1/ PowerShell script that can be modified
+    and already has those variables defined. You can update their value with the
+    correct path for your machine and use it for building the library.
 
-or, if you want to use the Powershell script
+** Setup a virtual environment (optional)
 
-#+begin_src 
-  ./build.ps1 build
-#+end_src
+For the integration of python and rust code i've used a tool provided by the same mainteiners of PyO3, [[https://github.com/PyO3/maturin][maturin]], that makes easy to build and publish a mix of python and rust code. Those steps are not mandatory but i suggest you to use this tool too because it's a matter of a couple of commands and you'll have a ready to install python wheel or a virtual environment where to test the code.
 
-** Install instructions
-TODO
+Once you have a python interpreter installed lets create a virtual environment with maturin and all the needed libraries to use pycode. In a shell run
+
+(I suppose you're using PowerShell as shell, if it's not the case change the command that differ for your shell or use PowerShell)
+
+#+begin_example shell
+ python -m venv .venv
+  .venv/Scripts/Activate.ps1
+  pip install maturin numpy matplotlib scipy
+#+end_example
+
+With maturin installed and the virtual environment enabled build the python library is easy as:
+
+#+begin_example shell
+maturin develop
+#+end_example
+
+this will build the debug version of the native library and install it in your virtual environment.
+
+To create the optimized release version of the library and create a wheel installable in any compatible python environment run:
+
+#+begin_example shell
+maturin build --release 
+#+end_example
