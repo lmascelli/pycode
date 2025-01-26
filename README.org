@@ -35,45 +35,54 @@ The library itself it's composed of three components:
 To build the library you'll need:
 - the *rust* toolchain installed: [[https://www.rust-lang.org/tools/install][Rust download]]
 - a C compiler compatible with the hdf5 library (usually MSVC on Windows and
-    gcc on Linux)
+  gcc on Linux)
 - *hdf5* library: [[https://github.com/HDFGroup/hdf5/releases/latest][hdf5 download]] 
-    (unzip it in a folder: you'll need that path later)
+  (unzip it in a folder: you'll need that path later)
 - a python interpreter
+- the [[https://llvm.org/][LLVM]] suite is also needed for the automatic traslation of the C
+  part of the library to a Rust module via [[https://github.com/rust-lang/rust-bindgen][bindgen]]
+
   
 *Windows*
 Installing the Rust toolchain should be enough to get bot the rust and the c
-tools needed. There are several python distribution like 
-WinPython]] or [[https://www.anaconda.com/][Anaconda]].
-Choose the one you prefer.
+tools needed. There are several python distribution like WinPython]] or
+[[https://www.anaconda.com/][Anaconda]]. Choose the one you prefer. LLVM can be downloaded from the official
+site [[https://releases.llvm.org/]]
 
 *Linux*
-Depending on you distro you can install the rust toolchain with your
-package manager or by using the install script from the rust project.
-Usually both the c compiler and a python environment are already bundle in
-the linux installation.
+Depending on you distro you can install the rust toolchain and LLVM with your
+package manager or by using the install script from the rust project. Usually
+both the c compiler and a python environment are already bundle in the linux
+installation.
 
 ** Set the environment variables
 
 To compile the library the path of the hdf5 binaries and include files are
 needed. So you'll need to set those environment variables:
   
-  - *HDF5_LIB_DIR*: path of the /lib/ directory of the downloaded hdf5
-    library
+- *HDF5_LIB_DIR*: path of the /lib/ directory of the downloaded hdf5
+  library
 
-  - *HDF5_INCLUDE_DIR*:  path of the /include/ directory of the downloaded
-    hdf5 library
+- *HDF5_INCLUDE_DIR*:  path of the /include/ directory of the downloaded
+  hdf5 library
 
-    For testing purpose there is a /build.ps1/ PowerShell script that can be modified
-    and already has those variables defined. You can update their value with the
-    correct path for your machine and use it for building the library.
+  For testing purpose there is a /build.ps1/ PowerShell script that can be
+  modified and already has those variables defined. You can update their value
+  with the correct path for your machine and use it for building the library.
 
 ** Setup a virtual environment (optional)
 
-For the integration of python and rust code i've used a tool provided by the same mainteiners of PyO3, [[https://github.com/PyO3/maturin][maturin]], that makes easy to build and publish a mix of python and rust code. Those steps are not mandatory but i suggest you to use this tool too because it's a matter of a couple of commands and you'll have a ready to install python wheel or a virtual environment where to test the code.
+For the integration of python and rust code i've used a tool provided by the
+same mainteiners of PyO3, [[https://github.com/PyO3/maturin][maturin]], that makes easy to build and publish a mix of
+python and rust code. Those steps are not mandatory but i suggest you to use
+this tool too because it's a matter of a couple of commands and you'll have a
+ready to install python wheel or a virtual environment where to test the code.
 
-Once you have a python interpreter installed lets create a virtual environment with maturin and all the needed libraries to use pycode. In a shell run
+Once you have a python interpreter installed lets create a virtual environment
+with maturin and all the needed libraries to use pycode. In a shell run
 
-(I suppose you're using PowerShell as shell, if it's not the case change the command that differ for your shell or use PowerShell)
+(I suppose you're using PowerShell as shell, if it's not the case change the
+command that differ for your shell or use PowerShell)
 
 #+begin_example shell
  python -m venv .venv
@@ -81,15 +90,18 @@ Once you have a python interpreter installed lets create a virtual environment w
   pip install maturin numpy matplotlib scipy cmake
 #+end_example
 
-With maturin installed and the virtual environment enabled build the python library is easy as:
+With maturin installed and the virtual environment enabled build the python
+library is easy as:
 
 #+begin_example shell
 maturin develop
 #+end_example
 
-this will build the debug version of the native library and install it in your virtual environment.
+this will build the debug version of the native library and install it in your
+virtual environment.
 
-To create the optimized release version of the library and create a wheel installable in any compatible python environment run:
+To create the optimized release version of the library and create a wheel
+installable in any compatible python environment run:
 
 #+begin_example shell
 maturin build --release 

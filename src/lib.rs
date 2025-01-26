@@ -1,3 +1,7 @@
+// Pycode. A native python library for the analysis of MEA recordings
+// Corporation: DIBRIS University of Genoa
+// Author:      Leonardo Mascelli
+
 use std::collections::HashMap;
 use std::ffi::{CStr, CString};
 
@@ -12,6 +16,9 @@ mod sys {
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
+/// All the variant of the Error type represent one of the possible event that
+/// can go wrong during the reading/writing of an hdf5 file containg data
+/// recorded with the MultiChannel Experimenter or MC_Rack software.
 #[derive(Debug)]
 pub enum Error {
     ErrorNotYetConverted(i32),
@@ -145,6 +152,8 @@ impl From<Error> for SpikeError {
 }
 
 impl Error {
+    /// this method convert a C enum value returned from a function to its
+    /// corresponding [`Error`] value
     fn from_phaseh5_error(code: sys::phaseh5_error) -> Result<(), Self> {
         match code {
             sys::phaseh5_error_OK => Ok(()),
@@ -391,10 +400,16 @@ impl Error {
     }
 }
 
+/// This function must be called before using the any other function of this
+/// library. It initialize the hdf5 library and create some custom types that
+/// MultiChannel Systems use in its recordings
 pub fn spike_c_init() -> Result<(), Error> {
     Ok(Error::from_phaseh5_error(unsafe { sys::pycodeh5_init() })?)
 }
 
+/// This function must be called after using the any other function of this
+/// library. It releases the memory bounded to the custom types created at
+/// the initialization of the library
 pub fn spike_c_close() {
     unsafe { sys::pycodeh5_close() };
 }
@@ -1270,6 +1285,45 @@ pub fn lowess(data: Vec<f32>, span: f32) -> Vec<f32> {
     return spike_rs::operations::math::lowess(data[..].as_ref(), span);
 }
 
+#[pyfunction]
+pub fn burst_detection(
+    peak_train: Vec<usize>,
+    sampling_frequency: f32,
+    cutoff: f32,
+) -> Option<(Vec<usize>, Vec<usize>)> {
+    match analysis::spike_analysis::logisi::burst_detection(
+        peak_train[..].as_ref(),
+        sampling_frequency,
+        cutoff,
+    ) {
+        Ok(ret) => Some(ret),
+        Err(err) => {
+            eprintln!("burst_detection: {err:?}");
+            None
+        }
+    }
+}
+
+
+#[pyfunction]
+fn until_here(
+    peak_train: Vec<usize>,
+    sampling_frequency: f32,
+    cutoff: f32,
+) -> Option<analysis::spike_analysis::logisi::TEST_TYPE> {
+    match analysis::spike_analysis::logisi::until_here(
+        peak_train[..].as_ref(),
+        sampling_frequency,
+        cutoff,
+    ) {
+        Ok(ret) => Some(ret),
+        Err(err) => {
+            eprintln!("until_here: {err:?}");
+            None
+        }
+    }
+}
+
 #[pymodule(name = "pycode")]
 fn pycode_rs_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPhase>()?;
@@ -1281,5 +1335,7 @@ fn pycode_rs_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(subsample_range, m)?)?;
     m.add_function(wrap_pyfunction!(logspace, m)?)?;
     m.add_function(wrap_pyfunction!(lowess, m)?)?;
+    m.add_function(wrap_pyfunction!(burst_detection, m)?)?;
+    m.add_function(wrap_pyfunction!(until_here, m)?)?;
     Ok(())
 }

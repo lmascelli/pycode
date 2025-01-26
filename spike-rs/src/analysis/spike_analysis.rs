@@ -235,6 +235,7 @@ pub mod logisi {
 
         let isi_len = isi.len();
 
+
         let max_isi = isi
             .iter()
             .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Less))
@@ -244,13 +245,17 @@ pub mod logisi {
 
         let ranges = super::math::logspace(0f32, max_isi, 10usize * max_isi as usize);
 
+
         // --------------------------------------------------------------------------
         // 2. compute the histogram and filter it
         let hist_values = hist(isi[..].as_ref(), ranges[..].as_ref())
             .iter()
             .map(|x| *x as f32 / isi_len as f32)
             .collect::<Vec<f32>>();
+
+        println!("Tick");
         let hist_norm = super::math::lowess(hist_values[..].as_ref(), 0.05);
+        println!("Tick");
 
         // --------------------------------------------------------------------------
         // 3. get peaks
@@ -269,6 +274,7 @@ pub mod logisi {
         let mut intra_value = f32::MIN;
         let mut last_peak_index: isize = -1;
 
+
         for i in 0..found_peaks.0.len() {
             let index = found_peaks.0[i];
             let value = found_peaks.1[i];
@@ -284,6 +290,7 @@ pub mod logisi {
                 break;
             }
         }
+
 
         // 5. find the index of the first minimum after the threshold that maximize the void parameter,
         //    calculated as follow:
@@ -521,5 +528,14 @@ pub mod logisi {
         }
 
         Ok(burst_data)
+    }
+
+    pub type TEST_TYPE = ();
+    pub fn until_here( 
+        peak_train: &[usize],
+        sampling_frequency: f32,
+        cutoff: f32,
+    ) -> Result<TEST_TYPE, super::SpikeError> {
+        Ok(())
     }
 }

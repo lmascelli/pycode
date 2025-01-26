@@ -9,7 +9,7 @@ hid_t InfoChannelMemoryType;
 hid_t HDF5StringType;
 
 #define CAST(X, Y) (Y)(X)
-// #define RES(F, E) {                           \
+// #define RES(F, E) {                             \
 //   herr_t res = F;                               \
 //   if (res < 0) {                                \ 
 //     return E;                                   \
@@ -72,7 +72,7 @@ herr_t count_analogs_callback(hid_t group,
 }
 
 phaseh5_error open_analog(AnalogStream *analog_stream,
-                           hid_t analog_stream_group) {
+                          hid_t analog_stream_group) {
 
   // GET THE ANALOG STREAM LABEL
   // ----------------------------------------------------------------------
@@ -178,7 +178,7 @@ herr_t open_analogs_callback(hid_t group,
 
 phaseh5_error close_analog(AnalogStream* analog_stream) {
   
-H5Dclose(analog_stream->channel_data_dataset);
+  H5Dclose(analog_stream->channel_data_dataset);
   return OK;
 }
 
@@ -214,7 +214,7 @@ herr_t open_events_callback(hid_t group,
     }
     hid_t entity_dataset = H5Dopen2(group, name, H5P_DEFAULT);
     if (entity_dataset <= 0) {
-    return OPEN_ENTITY_DATASET_FAIL;
+      return OPEN_ENTITY_DATASET_FAIL;
     }
     events_rets_c->event_entities[events_rets_c->current_index] = entity_dataset;
     events_rets_c->current_index += 1;
@@ -264,7 +264,7 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
   // PARSE THE ANALOG STREAMS
   // ----------------------------------------------------------------------
   hid_t analog_group =
-      H5Gopen2(fid, "/Data/Recording_0/AnalogStream", H5P_DEFAULT);
+    H5Gopen2(fid, "/Data/Recording_0/AnalogStream", H5P_DEFAULT);
   if (analog_group <= 0) {
     return OPEN_ANALOG_GROUP_FAIL;
   }
@@ -283,8 +283,8 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
   }
 
   CallbackAnalogsRets callback_ret = {
-      .current_index = 0,
-      .analog_streams = analog_streams,
+    .current_index = 0,
+    .analog_streams = analog_streams,
   };
 
   res = H5Literate2(analog_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL,
@@ -500,7 +500,7 @@ phaseh5_error raw_data(PhaseH5* phase, size_t index, size_t start, size_t end, i
   }
 
   res = H5Dread(phase->raw_data.channel_data_dataset, H5T_NATIVE_INT, read_dataspace,
-          raw_data_dataspace, H5P_DEFAULT, buf);
+                raw_data_dataspace, H5P_DEFAULT, buf);
   
   if (res < 0) {
     return RAW_DATA_READ_DATA_FAIL;
@@ -591,7 +591,7 @@ phaseh5_error digital(PhaseH5* phase, size_t start, size_t end, int* buf) {
   }
 
   res = H5Dread(phase->digital.channel_data_dataset, H5T_NATIVE_INT, read_dataspace,
-          digital_dataspace, H5P_DEFAULT, buf);
+                digital_dataspace, H5P_DEFAULT, buf);
   
   if (res < 0) {
     return DIGITAL_READ_DATA_FAIL;
@@ -881,15 +881,15 @@ phaseh5_error peak_train(PhaseH5* phase, const char* label, PeakTrain* peak_trai
 }
 
 /*
-TODO! restructure this function
-it must:
-- check if the group for the selected label already exists.
-- if exists:
+  TODO! restructure this function
+  it must:
+  - check if the group for the selected label already exists.
+  - if exists:
   - get and update the data
   - delete the old dataset
-- create the new dataset
-- write into them
- */
+  - create the new dataset
+  - write into them
+*/
 phaseh5_error set_peak_train(PhaseH5* phase, const char* label, const PeakTrain* peak_train) {
   char values_group_str[MAX_GROUP_STRING_LEN];
   char samples_group_str[MAX_GROUP_STRING_LEN];
@@ -964,23 +964,23 @@ phaseh5_error set_peak_train(PhaseH5* phase, const char* label, const PeakTrain*
 
   // Create the new datasets
   hid_t new_samples_dataset = H5Dcreate2(phase->fid,
-                                 samples_group_str,
-                                 H5T_NATIVE_ULONG,
-                                 samples_file_dataspace,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT);
+                                         samples_group_str,
+                                         H5T_NATIVE_ULONG,
+                                         samples_file_dataspace,
+                                         H5P_DEFAULT,
+                                         H5P_DEFAULT,
+                                         H5P_DEFAULT);
   if (new_samples_dataset <= 0) {
     return SET_PEAK_TRAIN_CREATE_SAMPLES_FILE_DATASET_FAIL;
   }
 
   hid_t new_values_dataset = H5Dcreate2(phase->fid,
-                                 values_group_str,
-                                 H5T_NATIVE_FLOAT,
-                                 values_file_dataspace,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT);
+                                        values_group_str,
+                                        H5T_NATIVE_FLOAT,
+                                        values_file_dataspace,
+                                        H5P_DEFAULT,
+                                        H5P_DEFAULT,
+                                        H5P_DEFAULT);
   if (new_values_dataset <= 0) {
     return SET_PEAK_TRAIN_CREATE_VALUES_FILE_DATASET_FAIL;
   }
