@@ -134,7 +134,8 @@ pub fn get_subsampled_pre_stim_post_from_intervals(
 
 pub mod logisi {
     /// Finds peaks in an histogram representing the density distriburion of ISI of a
-    /// peak train.
+    /// peak train. It returns the index of the peaks in the hist array and the
+    /// corresponding value.
     pub fn get_peaks(
         hist: &[f32],
         window_width_half: usize,
@@ -143,7 +144,7 @@ pub mod logisi {
     ) -> (Vec<usize>, Vec<f32>) {
         let hist_len = hist.len();
 
-        // if no num_peaks is provided the number of peaks to find is set to the lenght
+        // if no NUM_PEAKS is provided the number of peaks to find is set to the lenght
         // of the hist array
         let num_peaks = num_peaks.unwrap_or(hist_len);
 
@@ -157,30 +158,31 @@ pub mod logisi {
             // 1. set the boundary of the detection window
 
             // left boundary of the range. check that it's not before the start of the array
-            let end_l = if j + window_width_half > hist_len {
-                hist_len - window_width_half
+            let end_l = if j > window_width_half {
+                j - window_width_half
             } else {
-                j + window_width_half
+                0
             };
 
             // right boundary of the range. check that it's not after the end of the array
             let end_r = if j + window_width_half < hist_len {
-                1
+                j + window_width_half
             } else {
-                j - window_width_half
+                hist_len - 1
             };
 
             // 2. check if the jth value is greater than all the values in the window
             let mut is_peak = true;
+
             for i in end_l..j {
-                if hist[i] + threshold > hist[j] {
+                if hist[i] + threshold >= hist[j] {
                     is_peak = false;
                     break;
                 }
             }
 
             for i in j + 1..end_r {
-                if hist[i] + threshold > hist[j] {
+                if hist[i] + threshold >= hist[j] {
                     is_peak = false;
                     break;
                 }
@@ -235,16 +237,15 @@ pub mod logisi {
 
         let isi_len = isi.len();
 
-
         let max_isi = isi
             .iter()
             .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Less))
             .expect("calc_threshold: Failed to find the ISI max")
             .clone()
+            .log10()
             .ceil();
 
         let ranges = super::math::logspace(0f32, max_isi, 10usize * max_isi as usize);
-
 
         // --------------------------------------------------------------------------
         // 2. compute the histogram and filter it
@@ -272,7 +273,6 @@ pub mod logisi {
         let mut intra_value = f32::MIN;
         let mut last_peak_index: isize = -1;
 
-
         for i in 0..found_peaks.0.len() {
             let index = found_peaks.0[i];
             let value = found_peaks.1[i];
@@ -288,7 +288,6 @@ pub mod logisi {
                 break;
             }
         }
-
 
         // 5. find the index of the first minimum after the threshold that maximize the void parameter,
         //    calculated as follow:
@@ -311,33 +310,24 @@ pub mod logisi {
 
         // allocating resources for storing the minima found as a array of
         // (min_index, min_value, void_parameter)
-        let mut found_mins =
-            vec![(0usize, 0f32, 0f32); found_peaks.0.len() - last_peak_index as usize]; // vector to hold the found minima respect to each
-        let mut min_index = 0;
+        let mut found_mins = vec![]; // vector to hold the found minima respect to each
         let mut current_minima = f32::MAX;
 
         // here it cycle all the peaks from the next one after the intra burst peak, looks if it's a
         // minimum and assign it to the corrisponding maximum. Also check when a peak has been overcome
         // and updates the index of the peaks array
-        // TODO check if it just returns the FIRST found minimum that overcome the void_threshold
-        for i in intra_index as usize + 1..found_peaks.0.len() {
-            let value = hist_values[i];
+        for peak_index in last_peak_index as usize..found_peaks.0.len() {
+            let value = hist_norm[peak_index];
 
             // check if the current value is a minima
             if value < current_minima {
                 current_minima = value;
-            }
 
-            // MAYBE TODO check if a valid minimum has been found and break the cycle
-            // check if the the current index is one a the current peak and in such case
-            // update the corresponding *found_mins* value
-            if i == found_peaks.0[last_peak_index as usize] {
-                found_mins[min_index] = (
-                    i,
-                    current_minima,
-                    void_parameter(current_minima, found_peaks.1[last_peak_index as usize]),
-                );
-                last_peak_index += 1;
+                found_mins.push((
+                    found_peaks.0[peak_index],
+                    value,
+                    void_parameter(current_minima, found_peaks.1[peak_index as usize]),
+                ));
             }
         }
 
@@ -361,6 +351,7 @@ pub mod logisi {
     /// the `burst_data` is a mutable tuple of three arrays with the begin and the end
     pub fn find_burst(
         peak_train: &[usize],
+        sampling_frequency: f32,
         min_ibi: f32,
         min_durn: f32,
         min_spikes: usize,
@@ -385,15 +376,17 @@ pub mod logisi {
 
         let mut last_end = None;
 
-        let max_burst = peak_train.len() / 2;
+        let max_burst = burst_data.0.len();
 
         let burst_start = &mut burst_data.0;
         let burst_end = &mut burst_data.1;
 
+        let mut current_burst_index = 0;
+
         while n < peak_train.len() {
             // TODO(performace increase) avoid recomputing the isi using directly the
             // diff calculated during previous evaluations
-            let next_isi = (peak_train[n] - peak_train[n - 1]) as f32;
+            let next_isi = (peak_train[n] - peak_train[n - 1]) as f32 / sampling_frequency;
 
             if in_burst {
                 if next_isi > isi_low + EPSILON {
@@ -406,9 +399,10 @@ pub mod logisi {
                     last_end.replace(peak_train[end]);
 
                     // add the burst to the return lists
-                    burst_start.push(beg);
-                    burst_end.push(end);
-                    if burst_start.len() > max_burst {
+                    burst_start[current_burst_index] = peak_train[beg];
+                    burst_end[current_burst_index] = peak_train[end];
+                    current_burst_index += 1;
+                    if current_burst_index == max_burst {
                         return Err(super::SpikeError::LogISIFindBurstTooManyBursts);
                     }
                 }
@@ -419,6 +413,7 @@ pub mod logisi {
                     beg = n - 1; // the start of the burst is the spike before
                 }
             }
+            n += 1;
         }
 
         Ok(())
@@ -485,6 +480,7 @@ pub mod logisi {
         if isi_threshold > 1f32 {
             find_burst(
                 peak_train,
+                sampling_frequency,
                 0f32, // min_ibi
                 min_durn,
                 min_spikes,
@@ -494,6 +490,7 @@ pub mod logisi {
         } else if isi_threshold > cutoff && isi_threshold < 1f32 {
             find_burst(
                 peak_train,
+                sampling_frequency,
                 isi_threshold, // min_ibi
                 min_durn,
                 min_spikes,
@@ -506,6 +503,7 @@ pub mod logisi {
             let mut burst_data_2 = (vec![0usize; max_burst], vec![0usize; max_burst]);
             find_burst(
                 peak_train,
+                sampling_frequency,
                 0f32, // min_ibi
                 min_durn,
                 min_spikes,
@@ -517,6 +515,7 @@ pub mod logisi {
         } else {
             find_burst(
                 peak_train,
+                sampling_frequency,
                 0f32, // min_ibi
                 min_durn,
                 min_spikes,
@@ -529,156 +528,11 @@ pub mod logisi {
     }
 
     pub type TEST_TYPE = ();
-    pub fn until_here( 
+    pub fn until_here(
         peak_train: &[usize],
         sampling_frequency: f32,
         cutoff: f32,
     ) -> Result<TEST_TYPE, super::SpikeError> {
-        if peak_train.len() <= 3 {
-            return Err(super::SpikeError::LogISITooFewSamples);
-        }
-
-        // find burst parameters
-        let min_durn = 0f32;
-        let min_spikes = 3;
-
-        let max_burst = peak_train.len() / 2;
-
-        let mut burst_data = (vec![0usize; max_burst], vec![0usize; max_burst]);
-
-        // --------------------------------------------------------------------------
-        // 1. get the differences in number of samples between adjacent peaks and
-        // convert them in milliseconds
-        let isi: Vec<f32> = super::math::diff(peak_train)
-            .iter()
-            .map(|x| *x as f32 / sampling_frequency as f32 * 1000f32)
-            .collect();
-
-        let isi_len = isi.len();
-
-
-        let max_isi = isi
-            .iter()
-            .max_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Less))
-            .expect("calc_threshold: Failed to find the ISI max")
-            .clone()
-            .log10()
-            .ceil();
-
-        let ranges = super::math::logspace(0f32, max_isi, 10usize * max_isi as usize);
-
-        println!("{ranges:?}");
-
-        // --------------------------------------------------------------------------
-        // 2. compute the histogram and filter it
-        let hist_values = hist(isi[..].as_ref(), ranges[..].as_ref())
-            .iter()
-            .map(|x| *x as f32 / isi_len as f32)
-            .collect::<Vec<f32>>();
-
-
-        let hist_norm = super::math::lowess(hist_values[..].as_ref(), 0.05);
-
-        // 3. get peaks
-        // NOTE here i use the default parameters, maybe in the future some form of
-        // LogIsiDescriptor struct will be required as function parameter
-        let found_peaks = get_peaks(hist_norm[..].as_ref(), 2, 0f32, None);
-
-        // --------------------------------------------------------------------------
-        // 4. find the index of the intra burst peak
-
-        // default value for the ISI threshold
-        const ISI_THRESHOLD: f32 = 100f32; // milliseconds
-
-        // find the max peak before the ISI_THRESHOLD
-        let mut intra_index: isize = -1;
-        let mut intra_value = f32::MIN;
-        let mut last_peak_index: isize = -1;
-
-
-        for i in 0..found_peaks.0.len() {
-            let index = found_peaks.0[i];
-            let value = found_peaks.1[i];
-            let range = ranges[index];
-
-            if range < ISI_THRESHOLD {
-                if value > intra_value {
-                    intra_index = index as isize;
-                    intra_value = value;
-                    last_peak_index = i as isize;
-                }
-            } else {
-                break;
-            }
-        }
-
-
-        // 5. find the index of the first minimum after the threshold that maximize the void parameter,
-        //    calculated as follow:
-        //
-        // void_parameter_i = 1 - h(min)/sqrt(h(max_pre)*h(max_post_i))
-        // where max_post_i is the ith peak after the ISI threshold
-
-        let void_parameter = move |min_val: f32, peak_2_val: f32| {
-            1f32 - (min_val) / (intra_value * peak_2_val).sqrt()
-        };
-
-        // get the index of the remaining peaks in the found_peaks array and check if the intra_peak
-        // wasn't the last peak;
-        if last_peak_index == found_peaks.0.len() as isize - 1 {
-            return Err(super::SpikeError::LogISICalcThresholdIntraAtEndOfPeaks);
-        }
-
-        // advance to the next peak
-        last_peak_index += 1;
-
-        // allocating resources for storing the minima found as a array of
-        // (min_index, min_value, void_parameter)
-        let mut found_mins =
-            vec![(0usize, 0f32, 0f32); found_peaks.0.len() - last_peak_index as usize]; // vector to hold the found minima respect to each
-        let mut min_index = 0;
-        let mut current_minima = f32::MAX;
-
-        // here it cycle all the peaks from the next one after the intra burst peak, looks if it's a
-        // minimum and assign it to the corrisponding maximum. Also check when a peak has been overcome
-        // and updates the index of the peaks array
-        // TODO check if it just returns the FIRST found minimum that overcome the void_threshold
-        for i in intra_index as usize + 1..found_peaks.0.len() {
-            let value = hist_values[i];
-
-            // check if the current value is a minima
-            if value < current_minima {
-                current_minima = value;
-            }
-
-            // MAYBE TODO check if a valid minimum has been found and break the cycle
-            // check if the the current index is one a the current peak and in such case
-            // update the corresponding *found_mins* value
-            if i == found_peaks.0[last_peak_index as usize] {
-                found_mins[min_index] = (
-                    i,
-                    current_minima,
-                    void_parameter(current_minima, found_peaks.1[last_peak_index as usize]),
-                );
-                last_peak_index += 1;
-            }
-        }
-
-        // --------------------------------------------------------------------------
-        // 6. return threshold
-        //
-        // return the first range of the histogram whose minimum overcome the void threshold
-
-        const VOID_THRESHOLD: f32 = 0.7;
-
-        let found_mins = found_mins
-            .iter()
-            .find(|min| min.2 > VOID_THRESHOLD)
-            .map(|min| Ok(ranges[min.0] / 1000.))
-            .unwrap_or(Err(
-                super::SpikeError::LogISICalcThresholdNoMinWithRequiredVoidParameter,
-            ));
-
         Ok(())
     }
 }
