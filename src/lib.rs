@@ -1304,26 +1304,6 @@ pub fn burst_detection(
     }
 }
 
-
-#[pyfunction]
-fn until_here(
-    peak_train: Vec<usize>,
-    sampling_frequency: f32,
-    cutoff: f32,
-) -> Option<analysis::spike_analysis::logisi::TEST_TYPE> {
-    match analysis::spike_analysis::logisi::until_here(
-        peak_train[..].as_ref(),
-        sampling_frequency,
-        cutoff,
-    ) {
-        Ok(ret) => Some(ret),
-        Err(err) => {
-            eprintln!("until_here: {err:?}");
-            None
-        }
-    }
-}
-
 #[pymodule(name = "pycode")]
 fn pycode_rs_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyPhase>()?;
@@ -1336,6 +1316,5 @@ fn pycode_rs_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(logspace, m)?)?;
     m.add_function(wrap_pyfunction!(lowess, m)?)?;
     m.add_function(wrap_pyfunction!(burst_detection, m)?)?;
-    m.add_function(wrap_pyfunction!(until_here, m)?)?;
     Ok(())
 }

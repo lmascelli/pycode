@@ -572,13 +572,4 @@ pub mod logisi {
             burst_spike_count[0..burst_count].to_vec(),
         ))
     }
-
-    pub type TEST_TYPE = ();
-    pub fn until_here(
-        peak_train: &[usize],
-        sampling_frequency: f32,
-        cutoff: f32,
-    ) -> Result<TEST_TYPE, super::SpikeError> {
-        Ok(())
-    }
 }
