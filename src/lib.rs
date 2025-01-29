@@ -1290,7 +1290,7 @@ pub fn burst_detection(
     peak_train: Vec<usize>,
     sampling_frequency: f32,
     cutoff: f32,
-) -> Option<(Vec<usize>, Vec<usize>)> {
+) -> Option<(Vec<usize>, Vec<usize>, Vec<usize>)> {
     match analysis::spike_analysis::logisi::burst_detection(
         peak_train[..].as_ref(),
         sampling_frequency,

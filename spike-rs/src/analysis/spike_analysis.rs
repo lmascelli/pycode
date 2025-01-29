@@ -448,6 +448,9 @@ pub mod logisi {
                 }
             }
         }
+
+        burst_1.0 = new_burst_data.0;
+        burst_1.1 = new_burst_data.1;
         Ok(())
     }
 
@@ -456,7 +459,7 @@ pub mod logisi {
         peak_train: &[usize],
         sampling_frequency: f32,
         cutoff: f32,
-    ) -> Result<(Vec<usize>, Vec<usize>), super::SpikeError> {
+    ) -> Result<(Vec<usize>, Vec<usize>, Vec<usize>), super::SpikeError> {
         if peak_train.len() <= 3 {
             return Err(super::SpikeError::LogISITooFewSamples);
         }
@@ -524,7 +527,50 @@ pub mod logisi {
             )?;
         }
 
-        Ok(burst_data)
+        let mut burst_spike_count = vec![0usize; max_burst];
+
+        // count the spike in each burst
+        let mut burst_index = 0;
+        let mut spike_index = 0;
+        let mut burst_count = 0;
+        let mut spike_count;
+
+        // for each burst in burst data it checks if the burst is an actual
+        // burst and not just a 0 in the space for storing the burst initially
+        // reserved. If not (the end of a burst must be greater the 0), it start
+        // counting the spikes that are in the interval [BURST_START,
+        // BURST_END]. When a spike overcomes the end of a burst the number of
+        // spikes is stored in the BURST_SPIKE_COUNT array and the loop
+        // continues for the next burst.
+        for burst_index in 0..burst_data.0.len() {
+            let burst_start = burst_data.0[burst_index];
+            let burst_end = burst_data.1[burst_index];
+
+            if burst_end == 0 {
+                break;
+            }
+            burst_count += 1;
+            spike_count = 0;
+
+            while peak_train[spike_index] <= burst_end {
+                if peak_train[spike_index] >= burst_start {
+                    spike_count += 1;
+                }
+
+                // checking the index of the peak_train is theoretically avoidable
+                // because those are the same spikes from which the bursts are
+                // derived and the end of the last burst should be reached before
+                // the end of the spike train
+                spike_index += 1;
+            }
+            burst_spike_count[burst_index] = spike_count;
+        }
+
+        Ok((
+            burst_data.0[0..burst_count].to_vec(),
+            burst_data.1[0..burst_count].to_vec(),
+            burst_spike_count[0..burst_count].to_vec(),
+        ))
     }
 
     pub type TEST_TYPE = ();
