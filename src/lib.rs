@@ -8,13 +8,15 @@ use std::ffi::{CStr, CString};
 use pyo3::prelude::*;
 use spike_rs::{analysis, error::SpikeError, types::PhaseHandler};
 
-mod sys {
-    #![allow(non_upper_case_globals)]
-    #![allow(non_camel_case_types)]
-    #![allow(non_snake_case)]
-    #![allow(dead_code)]
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-}
+// mod sys {
+//     #![allow(non_upper_case_globals)]
+//     #![allow(non_camel_case_types)]
+//     #![allow(non_snake_case)]
+//     #![allow(dead_code)]
+//     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+// }
+
+mod sys;
 
 /// All the variant of the Error type represent one of the possible event that
 /// can go wrong during the reading/writing of an hdf5 file containg data

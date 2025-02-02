@@ -16,18 +16,22 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut build = cmake::Config::new("./c_pycode");
     let c_pycode_location = build.profile("Release").build();
 
-    let bindings = bindgen::Builder::default()
-        .header("c_pycode/pycode_h5.h")
-        .clang_arg(format!("-I{}", hdf5_include_dir))
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        .generate()
-        .expect("Unable to generate bindings");
-
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings");
+    // **********************************************************************
+    // use BINDGEN to generate binding to c_pycode
+    // **********************************************************************
+    // let bindings = bindgen::Builder::default()
+    //     .header("c_pycode/pycode_h5.h")
+    //     .clang_arg(format!("-I{}", hdf5_include_dir))
+    //     .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
+    //     .generate()
+    //     .expect("Unable to generate bindings");
+    // **********************************************************************
+    //
+    // let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+    //
+    // bindings
+    //     .write_to_file(out_path.join("bindings.rs"))
+    //     .expect("Couldn't write bindings");
 
     println!(
         "cargo:rustc-link-search=native={}",
