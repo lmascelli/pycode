@@ -155,7 +155,6 @@ pub struct InfoChannel {
     pub low_pass_filter_order: ::std::os::raw::c_int,
 }
 
-
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct AnalogStream {
@@ -173,7 +172,6 @@ pub struct PeakTrain {
     pub values: *mut f32,
     pub samples: *mut ::std::os::raw::c_long,
 }
-
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]

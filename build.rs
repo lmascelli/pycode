@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let hdf5_include_dir = env::var("HDF5_INCLUDE_DIR")
+    let _hdf5_include_dir = env::var("HDF5_INCLUDE_DIR")
         .expect("Please set the `HDF5_INCLUDE_DIR` environment variable");
     let hdf5_lib_dir =
         env::var("HDF5_LIB_DIR").expect("Please set the `HDF5_LIB_DIR` environment variable");

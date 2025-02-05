@@ -1046,6 +1046,20 @@ impl PyPhase {
         }
     }
 
+    pub fn date(&self) -> Option<String> {
+        match &self.phase {
+            Some(phase) => unsafe {
+                Some(
+                    std::ffi::CStr::from_ptr(phase.phase.date.as_ptr())
+                        .to_str()
+                        .expect("Failed to read the phase date")
+                        .to_owned(),
+                )
+            },
+            None => None,
+        }
+    }
+
     pub fn datalen(&self) -> Option<usize> {
         match &self.phase {
             None => None,

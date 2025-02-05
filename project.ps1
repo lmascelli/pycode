@@ -57,17 +57,17 @@ switch($args[0]) {
     }
 
     "build-gui" {
-        $files = Get-ChildItem -Path "./pycode/gui/forms"
+        $files = Get-ChildItem -Path "./pycode-gui/forms_source"
         foreach ($file in $files) {
             $fileWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($file.FullName)
-            $command = "./.venv/$bin_dir/pyside6-uic $file -o pycode/gui/${fileWithoutExtension}.py"
+            $command = "./.venv/$bin_dir/pyside6-uic $file -o pycode-gui/forms/${fileWithoutExtension}.py"
             Invoke-Expression $command
         }
 
-        $files = Get-ChildItem -Path "./pycode/gui/resources" -Filter "*.qrc"
+        $files = Get-ChildItem -Path "./pycode-gui/resources_source" -Filter "*.qrc"
         foreach ($file in $files) {
             $fileWithoutExtension = [System.IO.Path]::GetFileNameWithoutExtension($file.FullName)
-            $command = "./.venv/$bin_dir/pyside6-rcc $file -o pycode/gui/${fileWithoutExtension}.py"
+            $command = "./.venv/$bin_dir/pyside6-rcc $file -o pycode-gui/resources/${fileWithoutExtension}_rc.py"
             Invoke-Expression $command
         }
     }
