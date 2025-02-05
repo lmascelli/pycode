@@ -23,7 +23,7 @@ class Ui_PhaseExplorer(object):
     def setupUi(self, PhaseExplorer):
         if not PhaseExplorer.objectName():
             PhaseExplorer.setObjectName(u"PhaseExplorer")
-        PhaseExplorer.resize(400, 300)
+        PhaseExplorer.resize(697, 533)
         self.horizontalLayout = QHBoxLayout(PhaseExplorer)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.groupBox = QGroupBox(PhaseExplorer)
@@ -53,12 +53,12 @@ class Ui_PhaseExplorer(object):
         self.label_5 = QLabel(self.groupBox)
         self.label_5.setObjectName(u"label_5")
 
-        self.formLayout.setWidget(3, QFormLayout.LabelRole, self.label_5)
+        self.formLayout.setWidget(4, QFormLayout.LabelRole, self.label_5)
 
         self.lbl_sampling_frequency = QLabel(self.groupBox)
         self.lbl_sampling_frequency.setObjectName(u"lbl_sampling_frequency")
 
-        self.formLayout.setWidget(3, QFormLayout.FieldRole, self.lbl_sampling_frequency)
+        self.formLayout.setWidget(4, QFormLayout.FieldRole, self.lbl_sampling_frequency)
 
         self.label_7 = QLabel(self.groupBox)
         self.label_7.setObjectName(u"label_7")
@@ -70,6 +70,11 @@ class Ui_PhaseExplorer(object):
 
         self.formLayout.setWidget(1, QFormLayout.FieldRole, self.lbl_date)
 
+        self.grp_plots = QGroupBox(self.groupBox)
+        self.grp_plots.setObjectName(u"grp_plots")
+
+        self.formLayout.setWidget(3, QFormLayout.FieldRole, self.grp_plots)
+
 
         self.horizontalLayout.addWidget(self.groupBox)
 
@@ -79,6 +84,7 @@ class Ui_PhaseExplorer(object):
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.tbl_channels = QTableView(self.groupBox_2)
         self.tbl_channels.setObjectName(u"tbl_channels")
+        self.tbl_channels.setTabKeyNavigation(False)
         self.tbl_channels.setProperty(u"showDropIndicator", False)
         self.tbl_channels.setGridStyle(Qt.PenStyle.SolidLine)
         self.tbl_channels.setCornerButtonEnabled(False)
@@ -105,6 +111,7 @@ class Ui_PhaseExplorer(object):
         self.lbl_sampling_frequency.setText("")
         self.label_7.setText(QCoreApplication.translate("PhaseExplorer", u"Date", None))
         self.lbl_date.setText("")
+        self.grp_plots.setTitle(QCoreApplication.translate("PhaseExplorer", u"Plots", None))
         self.groupBox_2.setTitle(QCoreApplication.translate("PhaseExplorer", u"Channels", None))
     # retranslateUi
 

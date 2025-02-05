@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ChannelViewer</class>
+ <widget class="QWidget" name="ChannelViewer">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0">
+   <item>
+    <widget class="QGroupBox" name="grp_plots">
+     <property name="title">
+      <string>Plots</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3"/>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="grp_commands">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>60</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Commands</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

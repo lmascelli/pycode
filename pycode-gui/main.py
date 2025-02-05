@@ -2,20 +2,21 @@ from typing import Optional
 
 import sys
 import os
+# from PySide6 import QtCore as qtc
+from PySide6 import QtWidgets as qtw
+# from PySide6 import QtGui as qtg
+
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 resources_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), './resources'))
 sys.path.append(parent_dir)
 sys.path.append(resources_dir)
-
-from PySide6 import QtCore as qtc
-from PySide6 import QtWidgets as qtw
-from PySide6 import QtGui as qtg
 
 from forms.main_window import Ui_MainWindow
 
 from phase_explorer import PhaseExplorer
 
 from pathlib import Path
+
 
 class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -33,7 +34,7 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
 
     def close_tab(self, index: int):
         label = self.tabWidget.tabText(index)
-        if self.tabWidget.tabText(index) == "Welcome":
+        if label == "Welcome":
             self.tabWidget.removeTab(index)
 
     def open_phase_test(self):

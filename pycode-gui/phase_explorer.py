@@ -1,11 +1,8 @@
-# from typing import Optional
-
 import sys
 import os
 
 from PySide6 import QtCore as qtc
 from PySide6 import QtWidgets as qtw
-# from PySide6 import QtGui as qtg
 
 from forms.phase_explorer import Ui_PhaseExplorer
 
@@ -16,7 +13,7 @@ resources_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "./resou
 sys.path.append(parent_dir)
 sys.path.append(resources_dir)
 
-
+from channel_viewer import ChannelViewer
 
 class ChannelsModel(qtc.QAbstractTableModel):
     def __init__(self, phase: PyPhase):
@@ -64,11 +61,17 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
         super().__init__()
         self.setupUi(self)
 
-        phase = PyPhase(file_name)
+        self.phase = PyPhase(file_name)
         self.lbl_name.setText(file_name)
-        self.lbl_date.setText(phase.date())
+        self.lbl_date.setText(self.phase.date())
         self.lbl_duration.setText(
-            f"{phase.datalen() / phase.sampling_frequency()} seconds"
+            f"{self.phase.datalen() / self.phase.sampling_frequency()} seconds"
         )
-        self.lbl_sampling_frequency.setText(f"{phase.sampling_frequency()}")
-        self.tbl_channels.setModel(ChannelsModel(phase))
+        self.lbl_sampling_frequency.setText(f"{self.phase.sampling_frequency()}")
+        self.channels_model = ChannelsModel(self.phase)
+        self.tbl_channels.setModel(self.channels_model)
+        self.tbl_channels.doubleClicked.connect(self.open_channel)
+
+    def open_channel(self, arg: qtc.QModelIndex):
+        label = f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}"
+        self.parent().parent().addTab(ChannelViewer(self.phase, label), f"{label} viewer")

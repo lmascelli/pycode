@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>697</width>
+    <height>533</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -48,14 +48,14 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="0">
+      <item row="4" column="0">
        <widget class="QLabel" name="label_5">
         <property name="text">
          <string>Sampling Frequency</string>
         </property>
        </widget>
       </item>
-      <item row="3" column="1">
+      <item row="4" column="1">
        <widget class="QLabel" name="lbl_sampling_frequency">
         <property name="text">
          <string/>
@@ -76,6 +76,13 @@
         </property>
        </widget>
       </item>
+      <item row="3" column="1">
+       <widget class="QGroupBox" name="grp_plots">
+        <property name="title">
+         <string>Plots</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
@@ -87,6 +94,9 @@
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
        <widget class="QTableView" name="tbl_channels">
+        <property name="tabKeyNavigation">
+         <bool>false</bool>
+        </property>
         <property name="showDropIndicator" stdset="0">
          <bool>false</bool>
         </property>
