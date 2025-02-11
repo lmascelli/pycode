@@ -1,6 +1,6 @@
 from typing import Optional
 from .pycode import PyPhase
-import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import numpy as np
 
 def plot_raw_with_spikes(phase: PyPhase,
@@ -24,3 +24,10 @@ def plot_raw_with_spikes(phase: PyPhase,
     plt.stem(peaks[0], peaks[1],
              linefmt=f"{PyCode.get('SPIKES_COLOR_LINE')}",
              markerfmt=f"{PyCode.get('SPIKES_COLOR_HEAD')}")
+
+def rasterplot(phase: PyPhase, ax):
+    labels = phase.labels()
+    spikes = []
+    for label in labels:
+        spikes.append(phase.peak_train(label)[0][:])
+    ax.eventplot(spikes)

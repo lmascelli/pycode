@@ -1,0 +1,8 @@
+* GUI
+
+** Rasterplot nella schermata info
+
+** tick per vedere gli spike nel raw
+
+** impostare limiti nel draw
+

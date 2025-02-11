@@ -7,6 +7,10 @@ from PySide6 import QtWidgets as qtw
 from forms.phase_explorer import Ui_PhaseExplorer
 
 from pycode import PyPhase
+from pycode.operations import compute_threshold, spike_detection
+from pycode.utils import rasterplot
+
+import matplotlib.pyplot as plt
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 resources_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "./resources"))
@@ -72,6 +76,24 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
         self.tbl_channels.setModel(self.channels_model)
         self.tbl_channels.doubleClicked.connect(self.open_channel)
 
+        self.btn_rasterplot.clicked.connect(self.rasterplot)
+        self.btn_peak_detection.clicked.connect(self.compute_peak_trains)
+
     def open_channel(self, arg: qtc.QModelIndex):
         label = f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}"
         self.parent().parent().addTab(ChannelViewer(self.phase, label), f"{label} viewer")
+
+    def rasterplot(self):
+        fig = plt.figure()
+        ax = fig.subplots(1)
+        rasterplot(self.phase, ax)
+        plt.show()
+
+    def compute_peak_trains(self):
+        labels = self.phase.labels()
+        sampling_frequency = self.phase.sampling_frequency()
+        for label in labels:
+            data = self.phase.raw_data(label)
+            threshold = compute_threshold(data, sampling_frequency, 8)
+            peak_times, peak_values = spike_detection(data, sampling_frequency, threshold, 2e-3, 2e-3)
+            self.phase.set_peak_train(label, (peak_times, peak_values))
