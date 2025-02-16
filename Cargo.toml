@@ -14,4 +14,4 @@ spike_rs = { path = "./spike-rs"}
 
 [build-dependencies]
 cmake = "*"
-# bindgen = "*"
+bindgen = "*"

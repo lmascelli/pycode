@@ -1,6 +1,7 @@
 from typing import List
 from forms.channel_viewer import Ui_ChannelViewer
 from PySide6 import QtWidgets as qtw
+from PySide6 import QtCore as qtc
 
 from pycode import PyPhase
 
@@ -17,7 +18,21 @@ class ChannelViewer(qtw.QWidget, Ui_ChannelViewer):
         self.setupUi(self)
         self.canvas = MplCanvas(1, 1)
         self.grp_plots.layout().addWidget(self.canvas)
-        self.draw_raw_data(phase.raw_data(start_label))
+        self.data = phase.raw_data(start_label)
+        peak_times, peak_values = phase.peak_train(start_label)
+        self.peak_times = peak_times
+        self.peak_values = peak_values
+        self.draw_raw_data()
 
-    def draw_raw_data(self, data: List[float], index: int = 0):
-        self.canvas.axes[index].plot(data)
+        self.btn_reset.clicked.connect(self.draw_raw_data)
+
+    def draw_raw_data(self, index: int = 0):
+        axe = self.canvas.axes[index]
+        axe.clear()
+        axe.plot(self.data)
+        match self.chk_peaks.checkState():
+            case qtc.Qt.CheckState.Checked:
+                axe.scatter(self.peak_times, self.peak_values, color = "r")
+            case _:
+                pass
+        self.canvas.canvas.draw()

@@ -1,8 +1,103 @@
 use crate::{
-    analysis::subsampling::subsample_range, error::SpikeError, operations::math,
-    types::PhaseHandler,
+    analysis::subsampling::subsample_range,
+    error::SpikeError,
+    operations::math,
+    types::{ChannelTrait, PhaseTrait},
 };
-use std::collections::HashMap;
+
+// BASE FOR A merge_peak_train function
+/* {
+    let mut peak_train = PeakTrain::new(data.0);
+    let mut peak_train_c = peak_train.as_c_repr();
+    let res = unsafe {
+        sys::peak_train(
+            phase_ptr!(self),
+            channel_c.as_ptr(),
+            peak_train_ptr!(peak_train_c),
+        )
+    };
+
+    match Error::from_phaseh5_error(res) {
+        Ok(()) => {
+            // there is a group. Get the data and replace the new ones
+            let (samples, values) = (peak_train.samples, peak_train.values);
+
+            // the spikes train in present and contains data so the new data must be
+            // inserted between start and stop positions
+            let start = start.unwrap_or(samples[0]);
+            let end = end.unwrap_or(samples[samples.len() - 1]);
+            let mut i_start = 0;
+            let mut i_end = samples.len() - 1;
+            for (i, val) in samples.iter().enumerate() {
+                if *val >= start {
+                    i_start = i;
+                    break;
+                }
+            }
+            for (i, val) in samples.iter().enumerate() {
+                if *val >= end {
+                    i_end = i;
+                    break;
+                }
+            }
+
+            // get all values before start
+            let before_start_samples = samples[0..i_start].to_vec();
+            let before_start_values = values[0..i_start].to_vec();
+
+            // get all values after end
+            let after_end_samples = samples[i_end..].to_vec();
+            let after_end_values = values[i_end..].to_vec();
+
+            // join the values with data
+            let mut new_samples = vec![];
+            let mut new_values = vec![];
+
+            new_samples.extend_from_slice(before_start_samples.as_slice());
+            new_samples.extend_from_slice(data.0.as_slice());
+            new_samples.extend_from_slice(after_end_samples.as_slice());
+
+            new_values.extend_from_slice(before_start_values.as_slice());
+            new_values.extend_from_slice(data.1.as_slice());
+            new_values.extend_from_slice(after_end_values.as_slice());
+
+            // create the new PeakTrain
+            let mut new_peak_train = PeakTrain::new(new_samples.len());
+            let mut new_peak_train_c = new_peak_train.as_c_repr();
+
+            // try to write it
+            let res = unsafe {
+                sys::set_peak_train(
+                    phase_ptr!(self),
+                    channel_c.as_ptr(),
+                    peak_train_ptr!(new_peak_train_c),
+                )
+            };
+
+            match Error::from_phaseh5_error(res) {
+                Ok(()) => Ok(()),
+                Err(err) => Err(err.into()),
+            }
+        }
+
+        Err(Error::PeakTrainNoPeakGroup) => {
+            // there is no group yet. Just pass the new data
+            let res = unsafe {
+                sys::set_peak_train(
+                    phase_ptr!(self),
+                    channel_c.as_ptr(),
+                    peak_train_ptr!(peak_train_c),
+                )
+            };
+            match Error::from_phaseh5_error(res) {
+                Ok(()) => Ok(()),
+                Err(err) => Err(err.into()),
+            }
+        }
+
+        Err(err) => Err(err.into()),
+    }
+} */
 
 /// Build an histogram of `n_bins` equidistant values containing the distribution of
 /// the magnitude of the peaks. Returns the built histogram and the minimum and
@@ -39,11 +134,12 @@ pub fn get_peaks_bins(range: &[f32], n_bins: usize) -> Option<(Vec<usize>, f32, 
 
 /// Count the number of spikes grouped for the duration of `bin_size`
 /// before, during and after the stimulus interval
-pub fn get_subsampled_pre_stim_post_from_intervals(
-    phase: &mut impl PhaseHandler,
+pub fn get_subsampled_pre_stim_post_from_intervals<Channel: ChannelTrait>(
+    phase: &mut impl PhaseTrait<Channel>,
+    channel: &Channel,
     intervals: &[(usize, usize)],
     bin_size: usize,
-) -> Result<HashMap<String, Vec<(Vec<usize>, Vec<usize>, Vec<usize>)>>, SpikeError> {
+) -> Result<Vec<(Vec<usize>, Vec<usize>, Vec<usize>)>, SpikeError> {
     let n_intervals = intervals.len();
     let raw_data_len = phase.datalen();
     assert!(n_intervals != 0, "No intervals provided!!!");
@@ -116,19 +212,16 @@ pub fn get_subsampled_pre_stim_post_from_intervals(
         scan_intervals.push((start_pre, n_pre, start_stim, n_stim, start_post, n_post));
     }
 
-    let mut ret = HashMap::new();
-    for label in phase.labels() {
-        let (data_times, _) = phase.peak_train(&label, None, None)?;
-        let mut current_ret = vec![];
-        for interval in &scan_intervals {
-            current_ret.push((
-                subsample_range(&data_times[..], interval.0, bin_size, interval.1),
-                subsample_range(&data_times[..], interval.2, bin_size, interval.3),
-                subsample_range(&data_times[..], interval.4, bin_size, interval.5),
-            ));
-        }
-        ret.insert(label.clone(), current_ret);
+    let (data_times, _) = phase.peak_train(&channel, None, None)?;
+    let mut ret = vec![];
+    for interval in &scan_intervals {
+        ret.push((
+            subsample_range(&data_times[..], interval.0, bin_size, interval.1),
+            subsample_range(&data_times[..], interval.2, bin_size, interval.3),
+            subsample_range(&data_times[..], interval.4, bin_size, interval.5),
+        ));
     }
+
     Ok(ret)
 }
 
@@ -269,7 +362,6 @@ pub mod logisi {
         const ISI_THRESHOLD: f32 = 100f32; // milliseconds
 
         // find the max peak before the ISI_THRESHOLD
-        let mut intra_index: isize = -1;
         let mut intra_value = f32::MIN;
         let mut last_peak_index: isize = -1;
 
@@ -280,7 +372,6 @@ pub mod logisi {
 
             if range < ISI_THRESHOLD {
                 if value > intra_value {
-                    intra_index = index as isize;
                     intra_value = value;
                     last_peak_index = i as isize;
                 }
@@ -352,9 +443,9 @@ pub mod logisi {
     pub fn find_burst(
         peak_train: &[usize],
         sampling_frequency: f32,
-        min_ibi: f32,
-        min_durn: f32,
-        min_spikes: usize,
+        _min_ibi: f32,
+        _min_durn: f32,
+        _min_spikes: usize,
         isi_low: f32,
         burst_data: &mut (Vec<usize>, Vec<usize>),
     ) -> Result<(), super::SpikeError> {
@@ -372,7 +463,6 @@ pub mod logisi {
         let mut n = 1;
 
         let mut beg = n;
-        let mut end = n - 1;
 
         let mut last_end = None;
 
@@ -392,7 +482,7 @@ pub mod logisi {
                 if next_isi > isi_low + EPSILON {
                     // then we are no more in a burst
                     in_burst = false;
-                    end = n - 1; // the end of the burst is the spike before
+                    let end = n - 1; // the end of the burst is the spike before
 
                     // if an other burst has been found before calculate the IBI
                     // and update the last burst time
@@ -530,7 +620,6 @@ pub mod logisi {
         let mut burst_spike_count = vec![0usize; max_burst];
 
         // count the spike in each burst
-        let mut burst_index = 0;
         let mut spike_index = 0;
         let mut burst_count = 0;
         let mut spike_count;

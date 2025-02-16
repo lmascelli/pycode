@@ -3,9 +3,8 @@ use crate::{
         digital::get_digital_intervals, spike_analysis::get_subsampled_pre_stim_post_from_intervals,
     },
     error::SpikeError,
-    types::PhaseHandler,
+    types::{ChannelTrait, PhaseTrait},
 };
-use std::collections::HashMap;
 
 /// Subsample the given range returning a vector with the number of spikes in
 /// each bin. The input range shoulds contain the times of each peak detected
@@ -55,20 +54,21 @@ pub fn subsample_range(
     ret
 }
 
-pub fn subsample_peak_trains(
-    phase: &mut impl PhaseHandler,
+pub fn subsample_peak_trains<Channel: ChannelTrait>(
+    phase: &mut impl PhaseTrait<Channel>,
+    channel: &Channel,
     bin_size: usize,
     digital_index: usize,
-) -> Result<HashMap<String, Vec<(Vec<usize>, Vec<usize>, Vec<usize>)>>, SpikeError> {
+) -> Result<Vec<(Vec<usize>, Vec<usize>, Vec<usize>)>, SpikeError> {
     if digital_index >= phase.n_digitals() {
         return Err(SpikeError::IndexOutOfRange);
     }
     let stim_intervals = get_digital_intervals(&phase.digital(digital_index, None, None)?[..]);
-    get_subsampled_pre_stim_post_from_intervals(phase, &stim_intervals, bin_size)
+    get_subsampled_pre_stim_post_from_intervals(phase, channel, &stim_intervals, bin_size)
 }
 
-pub fn subsampled_post_stimulus_times(
-    phase: &mut impl PhaseHandler,
+pub fn subsampled_post_stimulus_times<Channel: ChannelTrait>(
+    phase: &mut impl PhaseTrait<Channel>,
     bin_size: usize,
     n_bins_post_stim: usize,
     digital_index: usize,
@@ -97,7 +97,7 @@ pub fn subsampled_post_stimulus_times(
 
     let mut ret = vec![vec! {0; n_bins_post_stim}; valid_intervals.len()];
 
-    for label in phase.labels() {
+    for label in phase.channels() {
         let peaks_times = phase.peak_train(&label, None, None)?.0;
 
         if peaks_times.len() == 0 {

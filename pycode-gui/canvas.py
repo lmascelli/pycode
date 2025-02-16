@@ -16,13 +16,16 @@ class MplCanvas(QWidget):
         self.setLayout(layout)
 
         figure = Figure(figsize=(WIDTH, HEIGHT), dpi=DPI)
-        canvas = FigureCanvas(figure)
-        navigation_toolbar = NavigationToolbar2QT(canvas, self)
+        self.canvas = FigureCanvas(figure)
+        navigation_toolbar = NavigationToolbar2QT(self.canvas, self)
         layout.addWidget(navigation_toolbar)
-        layout.addWidget(canvas)
+        layout.addWidget(self.canvas)
 
         self.axes = []
 
         for row in range(1, rows + 1):
             for col in range(1, cols + 1):
                 self.axes.append(figure.subplots(row, col))
+
+    def redraw(self):
+        self.canvas.draw()

@@ -1,11 +1,25 @@
 use super::error::SpikeError;
 
+pub trait ChannelTrait {
+    fn label(&self) -> String;
+    fn group(&self) -> usize;
+    fn x(&self) -> f32 {
+        todo!("X coord for channel has not yet been implemented");
+    }
+    fn y(&self) -> f32 {
+        todo!("Y coord for channel has not yet been implemented");
+    }
+    fn z(&self) -> f32 {
+        todo!("Z coord for channel has not yet been implemented");
+    }
+}
+
 /// PhaseHandler
 ///
 /// Trait for handling a phase recording
 /// Any implementer must provide access to the phase information and
 /// it's responsible of reading and writing data
-pub trait PhaseHandler {
+pub trait PhaseTrait<Channel: ChannelTrait> {
     //--------------------------------------------------------------------------
     // GENERAL INFO
 
@@ -16,7 +30,7 @@ pub trait PhaseHandler {
     fn datalen(&self) -> usize;
 
     /// Returns the list of the labels associated to active channels
-    fn labels(&self) -> Vec<String>;
+    fn channels(&self) -> Vec<Channel>;
 
     //--------------------------------------------------------------------------
     // RAW DATA
@@ -26,7 +40,7 @@ pub trait PhaseHandler {
     /// start and the end of the whole data will be used.
     fn raw_data(
         &self,
-        channel: &str,
+        channel: &Channel,
         start: Option<usize>,
         end: Option<usize>,
     ) -> Result<Vec<f32>, SpikeError>;
@@ -37,7 +51,7 @@ pub trait PhaseHandler {
     /// start and the end of the whole data will be used.
     fn set_raw_data(
         &mut self,
-        channel: &str,
+        channel: &Channel,
         start: Option<usize>,
         data: &[f32],
     ) -> Result<(), SpikeError>;
@@ -87,12 +101,12 @@ pub trait PhaseHandler {
     /// to be sorted in time.
     fn peak_train(
         &self,
-        channel: &str,
+        channel: &Channel,
         start: Option<usize>,
         end: Option<usize>,
     ) -> Result<(Vec<usize>, Vec<f32>), SpikeError>;
 
-    /// Replace a slice of the peak trains of the selected channel, if exists
+    /// Replace the peak trains of the selected channel, if exists
     /// with the provided `data`.
     /// The `start` and `end` of the slice are optional and if omitted the
     /// start and the end of the whole data will be used.
@@ -101,9 +115,7 @@ pub trait PhaseHandler {
     /// CHECK ON THAT FOR NOW!!!
     fn set_peak_train(
         &mut self,
-        channel: &str,
-        start: Option<usize>,
-        end: Option<usize>,
+        channel: &Channel,
         data: (Vec<usize>, Vec<f32>),
     ) -> Result<(), SpikeError>;
 }

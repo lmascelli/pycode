@@ -1,4 +1,4 @@
-use crate::{error::SpikeError, operations::math, types::PhaseHandler};
+use crate::{error::SpikeError, operations::math, types::{ChannelTrait, PhaseTrait}};
 
 pub fn compute_threshold(
     range: &[f32],
@@ -195,13 +195,13 @@ pub fn spike_detection(
     Ok((ret_times, ret_values))
 }
 
-pub fn compute_peak_train(
-    phase: &mut impl PhaseHandler,
-    label: &str,
+pub fn compute_peak_train<Channel: ChannelTrait>(
+    phase: &mut impl PhaseTrait<Channel>,
+    channel: &Channel,
     start: Option<usize>,
     end: Option<usize>,
 ) -> Result<(), SpikeError> {
-    let signal = phase.raw_data(label, start, end)?;
+    let signal = phase.raw_data(channel, start, end)?;
     let threshold = compute_threshold(&signal[..], phase.sampling_frequency(), 8 as _)?;
     let peaks_train = spike_detection(
         &signal[..],
@@ -210,6 +210,6 @@ pub fn compute_peak_train(
         2e-3,
         2e-3,
     )?;
-    phase.set_peak_train(label, start, end, peaks_train)?;
+    phase.set_peak_train(channel, peaks_train)?;
     Ok(())
 }

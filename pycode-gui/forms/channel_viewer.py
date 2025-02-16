@@ -15,9 +15,9 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QFont, QFontDatabase, QGradient, QIcon,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QComboBox, QFormLayout, QGridLayout,
-    QGroupBox, QLabel, QLineEdit, QPushButton,
-    QSizePolicy, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFormLayout,
+    QGridLayout, QGroupBox, QLabel, QLineEdit,
+    QPushButton, QSizePolicy, QVBoxLayout, QWidget)
 
 class Ui_ChannelViewer(object):
     def setupUi(self, ChannelViewer):
@@ -122,6 +122,11 @@ class Ui_ChannelViewer(object):
         self.widget.setObjectName(u"widget")
         self.verticalLayout_2 = QVBoxLayout(self.widget)
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.chk_peaks = QCheckBox(self.widget)
+        self.chk_peaks.setObjectName(u"chk_peaks")
+
+        self.verticalLayout_2.addWidget(self.chk_peaks)
+
         self.btn_reset = QPushButton(self.widget)
         self.btn_reset.setObjectName(u"btn_reset")
 
@@ -165,6 +170,7 @@ class Ui_ChannelViewer(object):
         self.cmb_x_unit.setItemText(1, QCoreApplication.translate("ChannelViewer", u"Seconds", None))
         self.cmb_x_unit.setItemText(2, QCoreApplication.translate("ChannelViewer", u"Milliseconds", None))
 
+        self.chk_peaks.setText(QCoreApplication.translate("ChannelViewer", u"With peaks", None))
         self.btn_reset.setText(QCoreApplication.translate("ChannelViewer", u"Reset", None))
         self.btn_update.setText(QCoreApplication.translate("ChannelViewer", u"Update", None))
     # retranslateUi

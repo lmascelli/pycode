@@ -96,4 +96,5 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
             data = self.phase.raw_data(label)
             threshold = compute_threshold(data, sampling_frequency, 8)
             peak_times, peak_values = spike_detection(data, sampling_frequency, threshold, 2e-3, 2e-3)
+            print(peak_times)
             self.phase.set_peak_train(label, (peak_times, peak_values))
