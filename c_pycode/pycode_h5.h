@@ -225,7 +225,7 @@ phaseh5_error digital(PhaseH5* phase, size_t start, size_t end, int* buf);
 phaseh5_error set_digital(PhaseH5* phase, size_t start, size_t end, const int* buf);
 phaseh5_error events_len(PhaseH5* phase, size_t index, hsize_t* len);
 phaseh5_error events(PhaseH5* phase, size_t index, LLONG_TYPE* buf);
-phaseh5_error peak_train_len(PhaseH5*, const char* label, size_t* len);
-phaseh5_error peak_train(PhaseH5* phase, const char* label, PeakTrain* peak_train);
-phaseh5_error set_peak_train(PhaseH5* phase, const char* label, const PeakTrain* peak_train);
+phaseh5_error peak_train_len(PhaseH5*, size_t group, const char* label, size_t* len);
+phaseh5_error peak_train(PhaseH5* phase, size_t group, const char* label, PeakTrain* peak_train);
+phaseh5_error set_peak_train(PhaseH5* phase, size_t group, const char* label, const PeakTrain* peak_train);
 

@@ -146,11 +146,18 @@ impl Phase {
         dims as usize
     }
 
-    pub fn peak_train_len(&self, label: &str) -> usize {
-        let label_c = CString::new(label).expect("peak_train_len: Failed to convert the CStr");
+    pub fn peak_train_len(&self, channel: &Channel) -> usize {
+        let label_c =
+            CString::new(channel.label.clone()).expect("peak_train_len: Failed to convert the CStr");
         let mut len = 0usize;
-        let res =
-            unsafe { sys::peak_train_len(phase_ptr!(self), label_c.as_ptr(), &mut len as *mut _) };
+        let res = unsafe {
+            sys::peak_train_len(
+                phase_ptr!(self),
+                channel.group,
+                label_c.as_ptr(),
+                &mut len as *mut _,
+            )
+        };
 
         match Error::from_phaseh5_error(res) {
             Ok(()) => len,
@@ -412,9 +419,9 @@ impl PhaseTrait<Channel> for Phase {
         start: Option<usize>,
         end: Option<usize>,
     ) -> Result<(Vec<usize>, Vec<f32>), SpikeError> {
-        let channel_c = CString::new(channel.label.clone())
+        let label_c = CString::new(channel.label.clone())
             .expect("peak_train_len: Failed to convert the CStr");
-        let peak_train_len = self.peak_train_len(&channel.label);
+        let peak_train_len = self.peak_train_len(channel);
         if peak_train_len == 0 {
             return Ok((vec![], vec![]));
         }
@@ -423,7 +430,8 @@ impl PhaseTrait<Channel> for Phase {
         let res = unsafe {
             sys::peak_train(
                 phase_ptr!(self),
-                channel_c.as_ptr(),
+                channel.group,
+                label_c.as_ptr(),
                 peak_train_ptr!(peak_train_c),
             )
         };
@@ -466,7 +474,7 @@ impl PhaseTrait<Channel> for Phase {
         channel: &Channel,
         data: (Vec<usize>, Vec<f32>),
     ) -> Result<(), SpikeError> {
-        let channel_c = CString::new(channel.label.clone())
+        let label_c = CString::new(channel.label.clone())
             .expect("peak_train_len: Failed to convert the CStr");
         // there is no group yet. Create a peak_train and set the data to it
 
@@ -482,7 +490,8 @@ impl PhaseTrait<Channel> for Phase {
         let res = unsafe {
             sys::set_peak_train(
                 phase_ptr!(self),
-                channel_c.as_ptr(),
+                channel.group,
+                label_c.as_ptr(),
                 peak_train_ptr!(peak_train_c),
             )
         };
@@ -538,13 +547,13 @@ impl PyPhase {
     pub fn channels(&self) -> Option<Vec<PyChannel>> {
         match &self.phase {
             None => None,
-            Some(phase) => {
-                Some(phase.channels().iter().map(|c| {
-                    PyChannel {
-                        channel: c.clone(),
-                    }
-                }).collect())
-            }
+            Some(phase) => Some(
+                phase
+                    .channels()
+                    .iter()
+                    .map(|c| PyChannel { channel: c.clone() })
+                    .collect(),
+            ),
         }
     }
 

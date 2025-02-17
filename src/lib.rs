@@ -5,15 +5,13 @@
 use pyo3::prelude::*;
 use spike_rs::analysis;
 
-// mod sys {
-//     #![allow(non_upper_case_globals)]
-//     #![allow(non_camel_case_types)]
-//     #![allow(non_snake_case)]
-//     #![allow(dead_code)]
-//     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-// }
-
-mod sys;
+mod sys {
+    #![allow(non_upper_case_globals)]
+    #![allow(non_camel_case_types)]
+    #![allow(non_snake_case)]
+    #![allow(dead_code)]
+    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+}
 
 pub mod error;
 use error::Error;
@@ -53,11 +51,6 @@ fn py_init() -> bool {
 fn py_close() {
     spike_c_close();
 }
-
-//        compute_threshold,
-//        spike_detection,
-//        get_digital_intervals,
-//        subsample_range,
 
 #[pyfunction]
 fn compute_threshold(range: Vec<f32>, sampling_frequency: f32, multiplier: f32) -> Option<f32> {

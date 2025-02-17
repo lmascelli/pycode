@@ -43,17 +43,6 @@ pub struct PyChannel {
 
 #[pymethods]
 impl PyChannel {
-    #[new]
-    pub fn new() -> Self {
-        Self {
-            channel: Channel {
-                group: 0,
-                label: "E-00155 21".to_string(),
-                index: 0,
-            }
-        }
-    }
-
     pub fn __str__(&self) -> String {
         return format!("wheel: {}, label: {}", self.channel.group, self.channel.label);
     }

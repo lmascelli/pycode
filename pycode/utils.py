@@ -1,15 +1,16 @@
 from typing import Optional
-from .pycode import PyPhase
+from .pycode import PyChannel, PyPhase 
+import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import numpy as np
 
 def plot_raw_with_spikes(phase: PyPhase,
-                         label: str,
+                         channel: PyChannel,
                          start: Optional[int] = None,
                          end: Optional[int] = None,
                          ):
-    raw_data = phase.raw_data(label, start, end)
-    peaks = phase.peak_train(label, start, end)
+    raw_data = phase.raw_data(channel, start, end)
+    peaks = phase.peak_train(channel, start, end)
 
     x_start = 0
     if start is not None:

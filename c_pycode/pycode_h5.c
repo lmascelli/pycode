@@ -739,7 +739,7 @@ phaseh5_error events(PhaseH5 *phase, size_t index, LLONG_TYPE *buf) {
 // This function checks if the datasets relative to the peak train of a LABEL
 // exist and in such case open them and stores their hid in VALUES and SAMPLES
 // parameter.
-phaseh5_error open_peak_train_datasets(PhaseH5 *phase, const char *label,
+phaseh5_error open_peak_train_datasets(PhaseH5 *phase, size_t group, const char *label,
                                        hid_t *values, hid_t *samples) {
   // Check if there are peak train data in the file
   if (phase->peaks_group == 0) {
@@ -754,7 +754,7 @@ phaseh5_error open_peak_train_datasets(PhaseH5 *phase, const char *label,
   char values_group_str[MAX_GROUP_STRING_LEN] = {0};
   char samples_group_str[MAX_GROUP_STRING_LEN] = {0};
 
-  sprintf(peak_train_group_str, "/Data/Recording_0/Peak_Train/%s/", label);
+  sprintf(peak_train_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/", group, label);
 
   // Check if the peak train group of the LABEL exist
   herr_t res = H5Lexists(phase->fid, peak_train_group_str, H5P_DEFAULT);
@@ -764,8 +764,8 @@ phaseh5_error open_peak_train_datasets(PhaseH5 *phase, const char *label,
     return PEAK_TRAIN_NO_PEAK_GROUP;
   }
 
-  sprintf(values_group_str, "/Data/Recording_0/Peak_Train/%s/values", label);
-  sprintf(samples_group_str, "/Data/Recording_0/Peak_Train/%s/samples", label);
+  sprintf(values_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/values", group, label);
+  sprintf(samples_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/samples", group, label);
 
   // Check if the peak train datasets of the LABEL exist
   res = H5Lexists(phase->fid, values_group_str, H5P_DEFAULT);
@@ -800,12 +800,13 @@ phaseh5_error open_peak_train_datasets(PhaseH5 *phase, const char *label,
 
 // Store the len of the datasets (i.e. the number of peaks) of LABEL in the
 // LEN parameter
-phaseh5_error peak_train_len(PhaseH5 *phase, const char *label, size_t *len) {
+phaseh5_error peak_train_len(PhaseH5 *phase, size_t group, const char *label,
+                             size_t *len) {
   hid_t values_ds;
   hid_t samples_ds;
 
   // Open the peak train datasets of LABEL channel
-  herr_t res = open_peak_train_datasets(phase, label, &values_ds, &samples_ds);
+  herr_t res = open_peak_train_datasets(phase, group, label, &values_ds, &samples_ds);
   if (res != OK) {
     return res;
   }
@@ -872,12 +873,12 @@ phaseh5_error peak_train_len(PhaseH5 *phase, const char *label, size_t *len) {
 // in memory of the peaks it is not usually a problem so they are always loaded
 // all in memory and the array it is then iterated to find the index of the
 // corresponding start and end position,
-phaseh5_error peak_train(PhaseH5 *phase, const char *label,
+phaseh5_error peak_train(PhaseH5 *phase, size_t group, const char *label,
                          PeakTrain *peak_train) {
   // Open peak dataset
   hid_t values_ds;
   hid_t samples_ds;
-  herr_t res = open_peak_train_datasets(phase, label, &values_ds, &samples_ds);
+  herr_t res = open_peak_train_datasets(phase, group, label, &values_ds, &samples_ds);
   if (res != OK) {
     return res;
   }
@@ -936,15 +937,15 @@ phaseh5_error peak_train(PhaseH5 *phase, const char *label,
 // For the same reason for which reading just a part of the peaks is difficult
 // also saving just part of them is avoided. To change some peaks all of them
 // must be read, then make the needed changes and store back the result.
-phaseh5_error set_peak_train(PhaseH5 *phase, const char *label,
+phaseh5_error set_peak_train(PhaseH5 *phase, size_t group, const char *label,
                              const PeakTrain *peak_train) {
   char label_group_str[MAX_GROUP_STRING_LEN];
   char values_group_str[MAX_GROUP_STRING_LEN];
   char samples_group_str[MAX_GROUP_STRING_LEN];
 
-  sprintf(label_group_str, "/Data/Recording_0/Peak_Train/%s/", label);
-  sprintf(values_group_str, "/Data/Recording_0/Peak_Train/%s/values", label);
-  sprintf(samples_group_str, "/Data/Recording_0/Peak_Train/%s/samples", label);
+  sprintf(label_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/", group, label);
+  sprintf(values_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/values", group, label);
+  sprintf(samples_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/samples", group, label);
 
   // Delete old dataspaces if present (maybe close the identifiers)
   // Check if the group exists
