@@ -91,6 +91,18 @@ fn spike_detection(
 }
 
 #[pyfunction]
+fn spike_detection_new(data: Vec<f32>, threshold: f32, peak_duration: usize, peak_distance: usize,
+) -> Option<(Vec<usize>, Vec<f32>)> {
+    match spike_rs::analysis::spike_detection::spike_detection_new(data[..].as_ref(), threshold, peak_duration, peak_distance) {
+        Ok(ret) => Some(ret),
+        Err(err) => {
+            eprintln!("spike_detection: {err:?}");
+            None
+        }
+    }
+}
+
+#[pyfunction]
 fn get_digital_intervals(digital: Vec<f32>) -> Option<Vec<(usize, usize)>> {
     Some(analysis::digital::get_digital_intervals(
         digital[..].as_ref(),
@@ -149,6 +161,7 @@ fn pycode_rs_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(py_close, m)?)?;
     m.add_function(wrap_pyfunction!(compute_threshold, m)?)?;
     m.add_function(wrap_pyfunction!(spike_detection, m)?)?;
+    m.add_function(wrap_pyfunction!(spike_detection_new, m)?)?;
     m.add_function(wrap_pyfunction!(get_digital_intervals, m)?)?;
     m.add_function(wrap_pyfunction!(subsample_range, m)?)?;
     m.add_function(wrap_pyfunction!(logspace, m)?)?;

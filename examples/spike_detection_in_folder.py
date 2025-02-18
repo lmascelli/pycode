@@ -2,10 +2,10 @@ import pycode as pc
 from pycode.operations import compute_threshold, spike_detection
 from os import listdir
 
-BASEPATH = "/home/leonardo/Documents/unige/data/Cardio/11-02-2025/44469"
+BASEPATH = "/home/leonardo/Documents/unige/data/Cardio/11-02-2025/41599"
 NDEV = 8
 PEAK_DURATION = 3e-3
-PEAK_DISTANCE = 200e-3
+PEAK_DISTANCE = 100e-3
 
 for file in listdir(BASEPATH):
     if file.endswith(".h5"):

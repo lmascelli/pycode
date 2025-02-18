@@ -44,7 +44,7 @@ pub struct PyChannel {
 #[pymethods]
 impl PyChannel {
     pub fn __str__(&self) -> String {
-        return format!("wheel: {}, label: {}", self.channel.group, self.channel.label);
+        return format!("well: {}, label: {}", self.channel.group, self.channel.label);
     }
 
     fn group(&self) -> usize {

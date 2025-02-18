@@ -2,10 +2,18 @@ from typing import Any, Optional
 import atexit
 import builtins
 
-from .pycode import PyChannel, PyPhase, init, close, logspace, lowess
+from .pycode import (
+    PyChannel,
+    PyPhase,
+    init,
+    close,
+    logspace,
+    lowess,
+)
 
 init()
 atexit.register(close)
+
 
 class _PyCode:
     def __init__(self):
@@ -19,6 +27,7 @@ class _PyCode:
             return self.variables[variable]
         else:
             return None
+
 
 setattr(builtins, "PyCode", _PyCode())
 

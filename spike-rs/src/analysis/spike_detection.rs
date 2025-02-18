@@ -1,4 +1,8 @@
-use crate::{error::SpikeError, operations::math, types::{ChannelTrait, PhaseTrait}};
+use crate::{
+    error::SpikeError,
+    operations::math,
+    types::{ChannelTrait, PhaseTrait},
+};
 
 pub fn compute_threshold(
     range: &[f32],
@@ -193,6 +197,139 @@ pub fn spike_detection(
         index += 1;
     }
     Ok((ret_times, ret_values))
+}
+
+pub fn spike_detection_new(
+    data: &[f32],
+    threshold: f32,
+    peak_duration: usize,
+    peak_distance: usize,
+) -> Result<(Vec<usize>, Vec<f32>), SpikeError> {
+    let data_len = data.len();
+    
+    if data_len< 2 {
+        return Err(SpikeError::SpikeDetectionTooFewSamples);
+    }
+    
+    // Here it is allocated the storage for the return values of peak times an
+    // amplitude. For increasing performance the maximum number of possible peaks
+    // that can be found has been reserved. If there is exactly one peak every
+    // PEAK_DISTANCE and the minimum distance of a peak is 2 samples the maximum
+    // number of peaks will be:
+    //
+    //
+    //      MIN PEAK DURATION                            OTHER PEAK DURATION
+    //      --                                           -----------
+    //      ^                                            ^
+    // ... -------------------------------------------------------------- ... ...
+    //     |    v                                      |              v
+    //     |   |                                       |    |
+    // ... |---------------- | ------------------------| ---------------- ... ...
+    //    PEAK  DURATION        PEAK DISTANCE           PEAK DURATION
+    //
+    //---------------------------------------------------------------------------
+    //                           DATA LENGTH
+    //
+
+    let mut peak_times = vec![];
+    let mut peak_values = vec![];
+
+    let max_peaks = data.len() / (peak_distance + 2);
+
+    peak_times.reserve(max_peaks);
+    peak_values.reserve(max_peaks);
+
+    // Now let's scroll a window of width peak_duration though the data
+
+    let window_size = peak_duration / 2;
+    
+    // USED VARIABLES
+    let mut left_boundary = 0;
+    let mut right_boundary = window_size.min(data_len);
+    let mut min = f32::MAX;
+    let mut min_index = 0;
+    let mut max = f32::MIN;
+    let mut max_index = 0;
+    let mut previous_min = f32::MAX;
+    let mut previous_min_index = 0;
+    let mut previous_max = f32::MIN;
+    let mut previous_max_index = 0;
+    let mut min_min;
+    let mut min_min_index;
+    let mut max_max;
+    let mut max_max_index;
+
+    // the first window is outside of the loop
+    for index in left_boundary..right_boundary {
+        if data[index] < min {
+            min = data[index];
+            min_index = index;
+        }
+        if data[index] > max {
+            max = data[index];
+            max_index = index;
+        }
+    }
+
+    left_boundary += window_size;
+    right_boundary += window_size;
+
+    while left_boundary < data_len {
+        // look for min and max inside the window and store their values and
+        // indices
+        for index in left_boundary..right_boundary {
+            if data[index] < min {
+                min = data[index];
+                min_index = index;
+            }
+            if data[index] > max {
+                max = data[index];
+                max_index = index;
+            }
+        }
+
+        if min < previous_min {
+            min_min = min;
+            min_min_index = min_index;
+        } else {
+            min_min = previous_min;
+            min_min_index = previous_min_index;
+        }
+        
+        if max < previous_max {
+            max_max = max;
+            max_max_index = max_index;
+        } else {
+            max_max = previous_max;
+            max_max_index = previous_max_index;
+        }
+
+        previous_min = min;
+        previous_min_index = min_index;
+        previous_max = max;
+        previous_max_index = max_index;
+
+        // check if the difference between min and max overcome the threshold
+        // and adjust the next boundaries accordingly to the found peak
+
+        if (min_min - max_max).abs() > threshold {
+            if min_min_index < max_max_index {
+                peak_times.push(min_min_index);
+                left_boundary = max_max_index + peak_distance;
+                right_boundary = (left_boundary + window_size).min(data_len);
+            } else {
+                peak_times.push(max_max_index);
+                left_boundary = min_min_index + peak_distance;
+                right_boundary = (left_boundary + window_size).min(data_len);
+            }
+            peak_values.push((min_min - max_max).abs());
+        } else {
+            left_boundary += window_size;
+            right_boundary += window_size;
+        }
+    }
+
+    Ok((peak_times, peak_values))
 }
 
 pub fn compute_peak_train<Channel: ChannelTrait>(

@@ -24,7 +24,7 @@ phaseh5_error pycodeh5_init() {
             offsetof(InfoChannel, channel_id), H5T_NATIVE_INT);
   H5Tinsert(InfoChannelMemoryType, "RowIndex\0",
             offsetof(InfoChannel, row_index), H5T_NATIVE_INT);
-  H5Tinsert(InfoChannelMemoryType, "GroupId\0", offsetof(InfoChannel, group_id),
+  H5Tinsert(InfoChannelMemoryType, "GroupID\0", offsetof(InfoChannel, group_id),
             H5T_NATIVE_INT);
   H5Tinsert(InfoChannelMemoryType, "ElectrodeGroup\0",
             offsetof(InfoChannel, electrode_group), H5T_NATIVE_INT);
@@ -147,6 +147,10 @@ phaseh5_error open_analog(AnalogStream *analog_stream,
   H5Tclose(info_channel_datatype);
   H5Sclose(info_channel_dataspace);
   H5Dclose(info_channel_dataset);
+
+  for (unsigned int i = 0; i<analog_stream->n_channels; i++) {
+    printf("%d DATA: %d\n", i, analog_stream->info_channels[i].group_id);
+  }
 
   // ----------------------------------------------------------------------
   // Get the handle for the ChannelData stream
