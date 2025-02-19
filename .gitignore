@@ -7,6 +7,8 @@ build.el
 /pycode/*.dll
 /pycode.libs/*.so
 /pycode.libs/*.dll
+/pycode-gui/forms/*
+/pycode-gui/resoures/*
 **/__pycache__/
 **/target
 test.py

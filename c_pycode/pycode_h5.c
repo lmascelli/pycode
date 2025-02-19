@@ -148,10 +148,6 @@ phaseh5_error open_analog(AnalogStream *analog_stream,
   H5Sclose(info_channel_dataspace);
   H5Dclose(info_channel_dataset);
 
-  for (unsigned int i = 0; i<analog_stream->n_channels; i++) {
-    printf("%d DATA: %d\n", i, analog_stream->info_channels[i].group_id);
-  }
-
   // ----------------------------------------------------------------------
   // Get the handle for the ChannelData stream
   // ----------------------------------------------------------------------
