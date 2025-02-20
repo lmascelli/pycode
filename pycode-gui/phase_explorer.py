@@ -7,7 +7,6 @@ from PySide6 import QtWidgets as qtw
 from forms.phase_explorer import Ui_PhaseExplorer
 
 from pycode import PyPhase
-from pycode.operations import compute_threshold, spike_detection
 from pycode.utils import rasterplot
 
 import matplotlib.pyplot as plt
@@ -18,29 +17,32 @@ sys.path.append(parent_dir)
 sys.path.append(resources_dir)
 
 from channel_viewer import ChannelViewer
+from peak_detection import PeakDetection
 
 class ChannelsModel(qtc.QAbstractTableModel):
     def __init__(self, phase: PyPhase):
         super().__init__()
         self.channels = {}
-        for label in phase.labels():
-            peak_train = phase.peak_train(label)
-            self.channels[label] = len(peak_train[0])
+        for channel in phase.channels():
+            peak_train = phase.peak_train(channel)
+            self.channels[channel] = len(peak_train[0])
 
     def columnCount(self, parent):
-        return 2 
+        return 3 
 
     def rowCount(self, parent):
         return len(self.channels)
 
     def data(self, index: qtc.QModelIndex, role=qtc.Qt.ItemDataRole.DisplayRole):
         if role==qtc.Qt.ItemDataRole.DisplayRole:
-            label = list(self.channels.keys())[index.row()]
+            channel = list(self.channels.keys())[index.row()]
             match index.column():
                 case 0:
-                    return label
+                    return channel.label() 
                 case 1:
-                    return self.channels[label]
+                    return self.channels[channel]
+                case 2:
+                    return channel.group() 
         else:
             return None
 
@@ -56,6 +58,8 @@ class ChannelsModel(qtc.QAbstractTableModel):
                     return "Channel Label"
                 case 1:
                     return "Spike Count"
+                case 2:
+                    return "Channel Group"
                 case _:
                     return f"{section}"
 
@@ -77,11 +81,19 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
         self.tbl_channels.doubleClicked.connect(self.open_channel)
 
         self.btn_rasterplot.clicked.connect(self.rasterplot)
-        self.btn_peak_detection.clicked.connect(self.compute_peak_trains)
+        self.btn_peak_detection.clicked.connect(self.open_peak_detection)
 
     def open_channel(self, arg: qtc.QModelIndex):
-        label = f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}"
-        self.parent().parent().addTab(ChannelViewer(self.phase, label), f"{label} viewer")
+        channel_label = f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}"
+        channel_group = f"{self.channels_model.itemData(arg.sibling(arg.row(), 2))[0]}"
+        global channel_index
+        channel_index = None
+        for channel in self.phase.channels():
+            if channel.group() == channel_group and channel.label() == channel_label:
+                print(f"group: {channel.group()} label: {channel.label()}")
+                channel_index = channel
+        if channel is not None:
+            self.parent().parent().addTab(ChannelViewer(self.phase, channel), f"{channel.group()}-{channel.label()} viewer")
 
     def rasterplot(self):
         fig = plt.figure()
@@ -89,12 +101,5 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
         rasterplot(self.phase, ax)
         plt.show()
 
-    def compute_peak_trains(self):
-        labels = self.phase.labels()
-        sampling_frequency = self.phase.sampling_frequency()
-        for label in labels:
-            data = self.phase.raw_data(label)
-            threshold = compute_threshold(data, sampling_frequency, 8)
-            peak_times, peak_values = spike_detection(data, sampling_frequency, threshold, 2e-3, 2e-3)
-            print(peak_times)
-            self.phase.set_peak_train(label, (peak_times, peak_values))
+    def open_peak_detection(self):
+        self.parent().parent().addTab(PeakDetection(self.phase), "Peak Detection")

@@ -24,7 +24,7 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.action_Quit.triggered.connect(self.close)
-        self.action_Open.triggered.connect(self.open_phase)
+        self.action_Open.triggered.connect(self.open_phase_test)
         self.tabWidget.tabCloseRequested.connect(self.close_tab)
 
     def add_tab(self, widget: qtw.QWidget, label: str, index: Optional[int] = None):
@@ -35,6 +35,8 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
     def close_tab(self, index: int):
         label = self.tabWidget.tabText(index)
         if label == "Welcome":
+            self.tabWidget.removeTab(index)
+        else:
             self.tabWidget.removeTab(index)
 
     def open_phase_test(self):

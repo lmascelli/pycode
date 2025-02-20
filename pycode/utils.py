@@ -27,8 +27,7 @@ def plot_raw_with_spikes(phase: PyPhase,
              markerfmt=f"{PyCode.get('SPIKES_COLOR_HEAD')}")
 
 def rasterplot(phase: PyPhase, ax):
-    labels = phase.labels()
     spikes = []
-    for label in labels:
-        spikes.append(phase.peak_train(label)[0][:])
+    for channel in phase.channels():
+        spikes.append(phase.peak_train(channel)[0][:])
     ax.eventplot(spikes)
