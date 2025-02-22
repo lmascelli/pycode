@@ -53,13 +53,15 @@ fn py_close() {
 }
 
 #[pyfunction]
-fn compute_threshold(range: Vec<f32>, sampling_frequency: f32, multiplier: f32) -> Option<f32> {
+fn compute_threshold(range: Vec<f32>, sampling_frequency: f32, multiplier: f32, min_threshold: f32) -> Option<f32> {
     match analysis::spike_detection::compute_threshold(
         range[..].as_ref(),
         sampling_frequency,
         multiplier,
+        min_threshold,
     ) {
-        Ok(ret) => Some(ret),
+        Ok(ret) => {
+            Some(ret)},
         Err(err) => {
             eprintln!("compute_threshold: {err:?}");
             None

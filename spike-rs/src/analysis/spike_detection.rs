@@ -8,6 +8,7 @@ pub fn compute_threshold(
     range: &[f32],
     sampling_frequency: f32,
     multiplier: f32,
+    min_threshold: f32,
 ) -> Result<f32, SpikeError> {
     const WINDOW_DURATION_TIME: f32 = 200e-3; // s
     const START_THRESHOLD: f32 = 100e-6; // V
@@ -30,7 +31,7 @@ pub fn compute_threshold(
         let ending_point = starting_point + window_duration_sample;
         let new_threshold = math::stdev(&range[starting_point..ending_point]);
 
-        if new_threshold < threshold {
+        if new_threshold < threshold && new_threshold > min_threshold {
             threshold = new_threshold;
         }
     }
@@ -339,7 +340,7 @@ pub fn compute_peak_train<Channel: ChannelTrait>(
     end: Option<usize>,
 ) -> Result<(), SpikeError> {
     let signal = phase.raw_data(channel, start, end)?;
-    let threshold = compute_threshold(&signal[..], phase.sampling_frequency(), 8 as _)?;
+    let threshold = compute_threshold(&signal[..], phase.sampling_frequency(), 8 as _, 0.0001f32)?;
     let peaks_train = spike_detection(
         &signal[..],
         phase.sampling_frequency(),

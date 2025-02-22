@@ -7,13 +7,17 @@ from pycode import PyChannel, PyPhase
 
 from canvas import MplCanvas
 
+from pathlib import Path
+PhaseID = Path
+
 class PlotData:
     def __init__(self):
         pass
 
 
 class ChannelViewer(qtw.QWidget, Ui_ChannelViewer):
-    def __init__(self, phase: PyPhase, start_channel: PyChannel):
+    def __init__(self, phase_id: PhaseID, start_channel: PyChannel):
+        phase = PyCodeGui.get_phase(phase_id)["handler"]
         super().__init__()
         self.setupUi(self)
         self.canvas = MplCanvas(1, 1)

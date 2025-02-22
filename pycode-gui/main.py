@@ -17,14 +17,13 @@ from phase_explorer import PhaseExplorer
 
 from pathlib import Path
 
-
 class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
 
         self.action_Quit.triggered.connect(self.close)
-        self.action_Open.triggered.connect(self.open_phase_test)
+        self.action_Open.triggered.connect(self.open_phase)
         self.tabWidget.tabCloseRequested.connect(self.close_tab)
 
     def add_tab(self, widget: qtw.QWidget, label: str, index: Optional[int] = None):
@@ -45,10 +44,15 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
 
     def open_phase(self):
         file_name = Path(qtw.QFileDialog.getOpenFileName(None, "Select the phase file")[0])
-        self.add_tab(PhaseExplorer(f"{file_name}"), file_name.name)
+        phase_explorer_name = file_name.name
+        phase_explorer = PhaseExplorer(f"{file_name}")
+        if phase_explorer is not None:
+            self.add_tab(phase_explorer, phase_explorer_name)
 
 
 if __name__=='__main__':
+    import __init__
+    
     app = qtw.QApplication(sys.argv)
     app.setStyle("windows")
 

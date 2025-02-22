@@ -12,9 +12,12 @@ from .pycode import (
 
 
 def compute_threshold(
-    data: List[float], sampling_frequency: float, multiplier: float
+    data: List[float],
+    sampling_frequency: float,
+    multiplier: float,
+    min_threshold: float = 0.0001,
 ) -> Optional[float]:
-    return py_compute_threshold(data, sampling_frequency, multiplier)
+    return py_compute_threshold(data, sampling_frequency, multiplier, min_threshold)
 
 
 def spike_detection(
@@ -37,6 +40,17 @@ def subsample_range(
     peaks: List[int], starting_sample: int, bin_size: int, n_bins: int
 ) -> List[int]:
     return py_subsample_range(peaks, starting_sample, bin_size, n_bins)
+
+
+def clear_peaks_over_threshold(
+    peak_times: List[int], peak_values: List[float], upper_threshold
+) -> Tuple[List[int], List[float]]:
+    new_peak_times, new_peak_values = [], []
+    for i, value in enumerate(peak_values):
+        if abs(value) < abs(upper_threshold):
+            new_peak_times.append(peak_times[i])
+            new_peak_values.append(value)
+    return (new_peak_times, new_peak_values)
 
 
 def psth(phase: PyPhase, bin_time_duration: float, psth_duration: float) -> np.ndarray:
@@ -91,8 +105,8 @@ def psth(phase: PyPhase, bin_time_duration: float, psth_duration: float) -> np.n
 
 
 def burst_detection(
-        peak_train: List[int],
-        sampling_frequency: float,
-        cutoff: float,
+    peak_train: List[int],
+    sampling_frequency: float,
+    cutoff: float,
 ) -> None:
     return py_burst_detection(peak_train, sampling_frequency, cutoff)
