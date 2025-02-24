@@ -44,28 +44,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = env::var("OUT_DIR").unwrap();
     let mut target_dir = PathBuf::from(out_dir);
 
-    // Traverse up the directory tree to reach the `target` directory
-    target_dir.pop(); // remove "out_dir"
-    target_dir.pop(); // remove "build"
-    target_dir.pop(); // remove <project-name>
-    target_dir.pop(); // remove "debug" or "release"
-    target_dir.pop(); // remove "target"
+    // // Traverse up the directory tree to reach the `target` directory
+    // target_dir.pop(); // remove "out_dir"
+    // target_dir.pop(); // remove "build"
+    // target_dir.pop(); // remove <project-name>
+    // target_dir.pop(); // remove "debug" or "release"
+    // target_dir.pop(); // remove "target"
 
-    #[cfg(target_os = "windows")]
-    {
-        std::fs::copy(
-            hdf5_bin_dir.join("hdf5.dll"),
-            target_dir.join("pycode.libs/hdf5.dll"),
-        )
-        .expect("failed to copy hdf5.dll");
-    }
-    #[cfg(target_os = "linux")]
-    {
-        std::fs::copy(
-            hdf5_bin_dir.join("libhdf5.so"),
-            target_dir.join("pycode.libs/libhdf5.so"),
-        )
-        .expect("failed to copy libhdf5.so");
-    }
+    // #[cfg(target_os = "windows")]
+    // {
+    //     std::fs::copy(
+    //         hdf5_bin_dir.join("hdf5.dll"),
+    //         target_dir.join("pycode.libs/hdf5.dll"),
+    //     )
+    //     .expect("failed to copy hdf5.dll");
+    // }
+    // #[cfg(target_os = "linux")]
+    // {
+    //     std::fs::copy(
+    //         hdf5_bin_dir.join("libhdf5.so"),
+    //         target_dir.join("pycode.libs/libhdf5.so"),
+    //     )
+    //     .expect("failed to copy libhdf5.so");
+    // }
     Ok(())
 }

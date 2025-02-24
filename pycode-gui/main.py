@@ -2,20 +2,17 @@ from typing import Optional
 
 import sys
 import os
-# from PySide6 import QtCore as qtc
 from PySide6 import QtWidgets as qtw
-# from PySide6 import QtGui as qtg
+from pathlib import Path
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 resources_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), './resources'))
 sys.path.append(parent_dir)
 sys.path.append(resources_dir)
 
-from forms.main_window import Ui_MainWindow
+from forms.main_window import Ui_MainWindow  # noqa: E402
+from phase_explorer import PhaseExplorer  # noqa: E402
 
-from phase_explorer import PhaseExplorer
-
-from pathlib import Path
 
 class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
     def __init__(self):
@@ -23,7 +20,7 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.action_Quit.triggered.connect(self.close)
-        self.action_Open.triggered.connect(self.open_phase)
+        self.action_Open.triggered.connect(self.open_phase_test)
         self.tabWidget.tabCloseRequested.connect(self.close_tab)
 
     def add_tab(self, widget: qtw.QWidget, label: str, index: Optional[int] = None):
@@ -39,7 +36,7 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
             self.tabWidget.removeTab(index)
 
     def open_phase_test(self):
-        file_name = Path('/home/leonardo/Documents/unige/data/test.h5')
+        file_name = Path('/home/leonardo/Documents/unige/data/Cardio/11-02-2025/41599/0002_US_50.h5')
         self.add_tab(PhaseExplorer(f"{file_name}"), file_name.name)
 
     def open_phase(self):
@@ -51,12 +48,13 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
 
 
 if __name__=='__main__':
-    import __init__
+    import __init__  # noqa: F401
     
     app = qtw.QApplication(sys.argv)
     app.setStyle("windows")
 
     window = PyCodeMainWindow()
+    window.showMaximized()
     window.show()
 
     sys.exit(app.exec())

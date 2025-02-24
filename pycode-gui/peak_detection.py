@@ -1,6 +1,5 @@
-from multiprocessing import Process
+from typing import Any, Dict
 from forms.peak_detection_tab import Ui_PeakDetection
-import pycode as pc
 from pycode.operations import (
     compute_threshold,
     clear_peaks_over_threshold,
@@ -13,11 +12,17 @@ from PySide6 import QtGui as qtg
 
 from pathlib import Path
 
-PhaseID = Path
-
+class Preset:
+    def __init__(self, val: Dict[str, Any]):
+        try:
+            self.n_std = float(val["n_std"])
+            self.peak_lifetime = float(val["peak lifetime"])
+            self.peak_distance = float(val["refractary period"])
+        except Exception as e:
+            print(e)
 
 class PeakDetection(qtw.QWidget, Ui_PeakDetection):
-    def __init__(self, phase_id: PhaseID):
+    def __init__(self, phase_id: Path):
         self.phase_id = phase_id
         super().__init__()
         self.setupUi(self)
@@ -25,18 +30,27 @@ class PeakDetection(qtw.QWidget, Ui_PeakDetection):
         self.btn_save.clicked.connect(self.save_peaks)
 
     def compute_peak_trains_ptsd(self):
-        phase = PyCodeGui.get_phase(self.phase_id)["handler"]
-        channels = phase.channels()
-        sampling_frequency = phase.sampling_frequency()
+        phase = PyCodeGui.get_phase(self.phase_id)
+        channels = phase.handler.channels()
+        sampling_frequency = phase.handler.sampling_frequency()
         global ndevs, peak_duration, peak_distance
+        global min_threshold
         ndevs = None
         peak_duration = None
         peak_distance = None
         artifact_threshold = None
+        min_threshold = None
+        # These are mandatory parameters so they can't fail
         try:
             ndevs = float(self.edt_n_std.text())
             peak_duration = float(self.edt_peak_lifetime.text())
             peak_distance = float(self.edt_refractary.text())
+            min_threshold = float(self.edt_min_threshold.text())
+        except Exception as e:
+            print(e)
+
+        # These is an optional parameters so it can fail
+        try:
             artifact_threshold = float(self.edt_artifact.text())
         except Exception as e:
             print(e)
@@ -52,8 +66,8 @@ class PeakDetection(qtw.QWidget, Ui_PeakDetection):
             self.lbl_output.setTextCursor(cursor)
             qtc.QCoreApplication.processEvents()
 
-            data = phase.raw_data(channel)
-            threshold = compute_threshold(data, sampling_frequency, ndevs)
+            data = phase.handler.raw_data(channel)
+            threshold = compute_threshold(data, sampling_frequency, ndevs, min_threshold)
             global peak_times, peak_values
             peak_times, peak_values = spike_detection(
                 data, sampling_frequency, threshold, peak_duration, peak_distance
@@ -61,16 +75,12 @@ class PeakDetection(qtw.QWidget, Ui_PeakDetection):
             if artifact_threshold is not None:
                 peak_times, peak_values = clear_peaks_over_threshold(peak_times, peak_values, artifact_threshold)
 
-            PyCodeGui.get_phase(self.phase_id)["computed_peaks"][
-                (channel.group(), channel.label())
-            ] = (peak_times, peak_values)
+            phase.peak_train[channel] = (peak_times, peak_values)
 
     def save_peaks(self):
-        phase = PyCodeGui.get_phase(self.phase_id)["handler"]
-        for channel in phase.channels():
-            phase.set_peak_train(
+        phase = PyCodeGui.get_phase(self.phase_id)
+        for channel in phase.handler.channels():
+            phase.handler.set_peak_train(
                 channel,
-                PyCodeGui.get_phase(self.phase_id)["computed_peaks"][
-                    (channel.group(), channel.label())
-                ],
+                phase.peak_train[channel],
             )

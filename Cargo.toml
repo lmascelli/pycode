@@ -1,7 +1,10 @@
+[workspace]
+members = [ "crates/spike-rs", ]
+
 [package]
-name = "pycode"
+name = "pycode-rs"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 build = "build.rs"
 
 [lib]
@@ -9,9 +12,10 @@ name = "pycode"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = "0.22.0"
-spike_rs = { path = "./spike-rs"}
+pyo3 = "*"
+spike_rs = { path = "./crates/spike-rs"}
 
 [build-dependencies]
 cmake = "*"
 bindgen = "*"
+

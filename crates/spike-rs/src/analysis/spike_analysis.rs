@@ -99,7 +99,41 @@ use crate::{
     }
 } */
 
-/// Build an histogram of `n_bins` equidistant values containing the distribution of
+/// Count the peaks in the provided intervals.
+/// INTERVALS are in the form of (start, end) times of the interval.
+/// Returns a vector with the number of peaks in each interval.
+/// 
+/// WARNINGS: for optimization purposes this function assumes that the spikes
+/// are sorted in increasing order and the intervals too so that it can avoid to
+/// scroll the peak train for each interval from the start
+pub fn count_peaks_in_intervals(
+    peak_times: &[usize],
+    intervals: &[(usize, usize)],
+) -> Vec<usize> {
+    let peaks_len = peak_times.len();
+    let intervals_len = intervals.len();
+    let mut ret = vec![0; intervals_len];
+    let mut peak_index = 0;
+    let mut interval_index = 0;
+    let mut peak_count = 0;
+    while peak_index < peaks_len && interval_index < intervals_len {
+        let current_peak = peak_times[peak_index];
+        if current_peak < intervals[interval_index].0 {
+            peak_index += 1;
+        }
+        else if current_peak >= intervals[interval_index].0 && current_peak <= intervals[interval_index].1 {
+            peak_count += 1;
+            peak_index += 1;
+        } else if current_peak > intervals[interval_index].1 {
+            ret[interval_index] = peak_count;
+            peak_count = 0;
+            interval_index += 1;
+        }
+    }
+    ret
+}
+
+/// build an histogram of `n_bins` equidistant values containing the distribution of
 /// the magnitude of the peaks. Returns the built histogram and the minimum and
 /// maximum values found
 ///

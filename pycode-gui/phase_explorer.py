@@ -1,7 +1,6 @@
 import sys
 import os
 from pathlib import Path
-PhaseID = Path
 
 from PySide6 import QtCore as qtc
 from PySide6 import QtWidgets as qtw
@@ -17,19 +16,30 @@ resources_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "./resou
 sys.path.append(parent_dir)
 sys.path.append(resources_dir)
 
-from channel_viewer import ChannelViewer
-from peak_detection import PeakDetection
+from channel_viewer import ChannelViewer  # noqa: E402
+from peak_detection import PeakDetection  # noqa: E402
 
 
 class ChannelsModel(qtc.QAbstractTableModel):
-    def __init__(self, phase_id: PhaseID):
+    def __init__(self, phase_id: Path):
         super().__init__()
-        phase = PyCodeGui.get_phase(phase_id)["handler"]
-        self.duration = phase.datalen() / phase.sampling_frequency()
+        self.phase_id = phase_id
         self.channels = {}
-        for channel in phase.channels():
-            peak_train = phase.peak_train(channel)
-            self.channels[channel] = len(peak_train[0])
+        self.computeModel()
+
+    def computeModel(self):
+        phase = PyCodeGui.get_phase(self.phase_id)
+        self.duration = phase.handler.datalen() / phase.handler.sampling_frequency()
+        if phase.peak_train is not None:
+            for channel in phase.handler.channels():
+                peak_train = phase.peak_train[channel]
+                self.channels[channel] = len(peak_train[0])
+        else:
+            phase.peak_train = {}
+            for channel in phase.handler.channels():
+                peak_train = phase.handler.peak_train(channel)
+                phase.peak_train[channel] = peak_train
+                self.channels[channel] = len(peak_train[0])
 
     def columnCount(self, parent):
         return 4
@@ -82,7 +92,7 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
 
         PyCodeGui.add_phase(file_path)
         self.phase_id = file_path
-        phase = PyCodeGui.get_phase(file_path)["handler"]
+        phase = PyCodeGui.get_phase(file_path).handler
         self.lbl_name.setText(f"{self.phase_id}")
         self.lbl_date.setText(phase.date())
         self.lbl_duration.setText(
@@ -97,15 +107,12 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
         self.btn_peak_detection.clicked.connect(self.open_peak_detection)
 
     def open_channel(self, arg: qtc.QModelIndex):
-        channel_label = f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}"
-        channel_group = f"{self.channels_model.itemData(arg.sibling(arg.row(), 2))[0]}"
-        global channel_index
-        channel_index = None
-        phase = PyCodeGui.get_phase(self.phase_id)["handler"]
-        for channel in phase.channels():
-            if channel.group() == channel_group and channel.label() == channel_label:
-                print(f"group: {channel.group()} label: {channel.label()}")
-                channel_index = channel
+        channel_label = f"{self.channels_model.itemData(arg.sibling(arg.row(), 1))[0]}"
+        channel_group = int(f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}")
+        print(channel_label)
+        print(channel_group)
+        phase = PyCodeGui.get_phase(self.phase_id).handler
+        channel = next(filter(lambda c: c.group() == channel_group and c.label() == channel_label, phase.channels()))
         if channel is not None:
             self.parent().parent().addTab(
                 ChannelViewer(self.phase_id, channel),
@@ -115,7 +122,7 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
     def rasterplot(self):
         fig = plt.figure()
         ax = fig.subplots(1)
-        phase = PyCodeGui.get_phase(self.phase_id)["handler"]
+        phase = PyCodeGui.get_phase(self.phase_id).handler
         rasterplot(phase, ax)
         plt.show()
 

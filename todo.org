@@ -1,8 +1,14 @@
 * GUI
 
-** Rasterplot nella schermata info
-
-** tick per vedere gli spike nel raw
+** Variabile globale associata alla fase
+*** Da aggiornare la chiusura delle tab relative ad una fase
+*** Da aggiornare in base a questi spikes:
+- lo scatter nel channel viewer
+- la conta degli spikes 
 
 ** impostare limiti nel draw
 
+** widget di analisi
+
+** widget di salvataggio dati
+Pensare ad una tabella o struttura che permetta di salvare dati relativi a più fasi

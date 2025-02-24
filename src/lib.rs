@@ -10,6 +10,7 @@ mod sys {
     #![allow(non_camel_case_types)]
     #![allow(non_snake_case)]
     #![allow(dead_code)]
+    #![allow(unsafe_op_in_unsafe_fn)]
     include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 }
 
@@ -132,7 +133,7 @@ pub fn logspace(start: f32, end: f32, n_points: usize) -> Vec<f32> {
 }
 
 #[pyfunction]
-pub fn lowess(data: Vec<f32>, span: f32) -> Vec<f32> {
+pub unsafe fn lowess(data: Vec<f32>, span: f32) -> Vec<f32> {
     return spike_rs::operations::math::lowess(data[..].as_ref(), span);
 }
 

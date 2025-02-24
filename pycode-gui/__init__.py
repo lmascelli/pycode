@@ -3,6 +3,16 @@ from pycode import PyPhase
 from typing import Any, Dict, Optional
 from pathlib import Path
 
+class PyCodeGuiPhase:
+    def __init__(self, file_path: Path):
+        try:
+            self.handler = PyPhase(file_path)
+        except Exception as e:
+            print(e)
+            return None
+        self.peak_train = None
+        self.burst_train = None
+
 class _PyCodeGui:
     def __init__(self):
         self.variables: Dict[str, Any] = {
@@ -22,17 +32,14 @@ class _PyCodeGui:
         else:
             return None
 
-    def add_phase(self, path: Path):
-        handler = PyPhase(f"{path}")
+    def add_phase(self, file_path: Path):
+        handler = PyCodeGuiPhase(file_path)
         if handler is not None:
-            self.variables["PHASES"][path] = {
-                "handler": handler,
-                "computed_peaks" : {},
-            }
+            self.variables["PHASES"][file_path] = handler
         else:
-            print(f"Failed opening the phase at {path}")
+            print(f"Failed opening the phase at {file_path}")
 
-    def get_phase(self, path: Path):
-        return self.get("PHASES")[path]
+    def get_phase(self, file_path: Path):
+        return self.get("PHASES")[file_path]
 
 setattr(builtins, "PyCodeGui", _PyCodeGui())
