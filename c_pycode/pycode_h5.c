@@ -1,6 +1,4 @@
 #include "pycode_h5.h"
-#include <H5Fpublic.h>
-#include <H5public.h>
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -492,7 +490,7 @@ phaseh5_error raw_data(PhaseH5 *phase, size_t index, size_t start, size_t end,
     return RAW_DATA_END_BEFORE_START;
   }
 
-  if (end >= phase->datalen) {
+  if (end > phase->datalen) {
     return RAW_DATA_END_OUT_OF_BOUNDS;
   }
 

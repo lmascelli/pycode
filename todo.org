@@ -1,3 +1,5 @@
+* PyCode
+
 * GUI
 
 ** Variabile globale associata alla fase
@@ -6,9 +8,9 @@
 - lo scatter nel channel viewer
 - la conta degli spikes 
 
-** impostare limiti nel draw
-
 ** widget di analisi
 
 ** widget di salvataggio dati
 Pensare ad una tabella o struttura che permetta di salvare dati relativi a più fasi
+
+** unita nelle intestazioni

@@ -44,7 +44,7 @@
           <item row="1" column="0">
            <widget class="QLabel" name="label_4">
             <property name="text">
-             <string>Peak lifetime period</string>
+             <string>Peak lifetime period (seconds)</string>
             </property>
            </widget>
           </item>
@@ -58,7 +58,7 @@
           <item row="2" column="0">
            <widget class="QLabel" name="label_5">
             <property name="text">
-             <string>Refractary period</string>
+             <string>Refractary period (seconds)</string>
             </property>
            </widget>
           </item>
@@ -72,7 +72,7 @@
           <item row="3" column="0">
            <widget class="QLabel" name="label_6">
             <property name="text">
-             <string>Artifact Threshold</string>
+             <string>Artifact Threshold (Volt)</string>
             </property>
            </widget>
           </item>
@@ -82,14 +82,14 @@
           <item row="4" column="0">
            <widget class="QLabel" name="label_7">
             <property name="text">
-             <string>Minimum threshold</string>
+             <string>Minimum threshold (Volt)</string>
             </property>
            </widget>
           </item>
           <item row="4" column="1">
            <widget class="QLineEdit" name="edt_min_threshold">
             <property name="text">
-             <string>0.0001</string>
+             <string>0.00001</string>
             </property>
            </widget>
           </item>

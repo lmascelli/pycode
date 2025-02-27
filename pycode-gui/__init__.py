@@ -21,8 +21,8 @@ class _PyCodeGui:
             # with Path i mean an instance of the Path class in the pathlib
             # module not just a string with the path of the file
             "PHASES": {},
-        
-}
+        }
+
     def set(self, variable: str, property_value: Any):
         self.variables[variable] = property_value
 

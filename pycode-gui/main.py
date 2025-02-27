@@ -51,7 +51,7 @@ if __name__=='__main__':
     import __init__  # noqa: F401
     
     app = qtw.QApplication(sys.argv)
-    app.setStyle("windows")
+    # app.setStyle("windows")
 
     window = PyCodeMainWindow()
     window.showMaximized()

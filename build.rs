@@ -6,8 +6,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .expect("Please set the `HDF5_INCLUDE_DIR` environment variable");
     let hdf5_lib_dir =
         env::var("HDF5_LIB_DIR").expect("Please set the `HDF5_LIB_DIR` environment variable");
-    let hdf5_bin_dir =
-        env::var("HDF5_BIN_DIR").expect("Please set the `HDF5_BIN_DIR` environment variable");
+    // let hdf5_bin_dir =
+    //     env::var("HDF5_BIN_DIR").expect("Please set the `HDF5_BIN_DIR` environment variable");
 
     println!("cargo:rerun-if-changed=c_pycode/pycode_h5.c");
     println!("cargo:rerun-if-changed=c_pycode/pycode_h5.h");
@@ -40,9 +40,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rustc-link-search=native={hdf5_lib_dir}");
     println!("cargo:rustc-link-lib=dylib=hdf5");
 
-    let hdf5_bin_dir = PathBuf::from(hdf5_bin_dir);
-    let out_dir = env::var("OUT_DIR").unwrap();
-    let mut target_dir = PathBuf::from(out_dir);
+    // let hdf5_bin_dir = PathBuf::from(hdf5_bin_dir);
+    // let out_dir = env::var("OUT_DIR").unwrap();
+    // let mut target_dir = PathBuf::from(out_dir);
 
     // // Traverse up the directory tree to reach the `target` directory
     // target_dir.pop(); // remove "out_dir"

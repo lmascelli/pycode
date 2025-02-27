@@ -18,6 +18,7 @@ sys.path.append(resources_dir)
 
 from channel_viewer import ChannelViewer  # noqa: E402
 from peak_detection import PeakDetection  # noqa: E402
+from psth import Psth  # noqa: E402
 
 
 class ChannelsModel(qtc.QAbstractTableModel):
@@ -80,7 +81,7 @@ class ChannelsModel(qtc.QAbstractTableModel):
                 case 2:
                     return "Spike Count"
                 case 3:
-                    return "MFR"
+                    return "MFR [Hz]"
                 case _:
                     return f"{section}"
 
@@ -105,12 +106,11 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
 
         self.btn_rasterplot.clicked.connect(self.rasterplot)
         self.btn_peak_detection.clicked.connect(self.open_peak_detection)
-
+        self.btn_psth.clicked.connect(self.psth)
+        
     def open_channel(self, arg: qtc.QModelIndex):
         channel_label = f"{self.channels_model.itemData(arg.sibling(arg.row(), 1))[0]}"
         channel_group = int(f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}")
-        print(channel_label)
-        print(channel_group)
         phase = PyCodeGui.get_phase(self.phase_id).handler
         channel = next(filter(lambda c: c.group() == channel_group and c.label() == channel_label, phase.channels()))
         if channel is not None:
@@ -128,3 +128,6 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
 
     def open_peak_detection(self):
         self.parent().parent().addTab(PeakDetection(self.phase_id), "Peak Detection")
+
+    def psth(self):
+        self.parent().parent().addTab(Psth(self.phase_id), "Psth")        

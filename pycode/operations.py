@@ -2,12 +2,14 @@ from typing import List, Optional, Tuple
 import numpy as np
 
 from .pycode import (
+    PyChannel,
     PyPhase,
     compute_threshold as py_compute_threshold,
     spike_detection as py_spike_detection,
     get_digital_intervals as py_get_digital_intervals,
     subsample_range as py_subsample_range,
     burst_detection as py_burst_detection,
+    count_peaks_in_intervals as py_count_peaks_in_intervals,
 )
 
 
@@ -35,6 +37,8 @@ def spike_detection(
 def get_digital_intervals(digital: List[int]) -> List[Tuple[int, int]]:
     return py_get_digital_intervals(digital)
 
+def count_peaks_in_intervals(peak_times: List[int], intervals: List[Tuple[int, int]]) -> List[int]:
+    return py_count_peaks_in_intervals(peak_times, intervals)
 
 def subsample_range(
     peaks: List[int], starting_sample: int, bin_size: int, n_bins: int
@@ -53,10 +57,15 @@ def clear_peaks_over_threshold(
     return (new_peak_times, new_peak_values)
 
 
-def psth(phase: PyPhase, bin_time_duration: float, psth_duration: float) -> np.ndarray:
+def psth(phase: PyPhase,
+         bin_time_duration: float,
+         psth_duration: float,
+         excluded_channels: List[PyChannel] = [],
+         ) -> np.ndarray:
     """
     Compute the PSTH ociaoooooooo :):):)
-    and returns a list with the count of the spikes in each bin.
+    and returns a list with the count of the spikes in each bin averaged by the number
+    of channels and the length of the psth.
 
     @Parameters
     - phase: the Phase of interest
@@ -72,7 +81,7 @@ def psth(phase: PyPhase, bin_time_duration: float, psth_duration: float) -> np.n
 
     n_bins = int(psth_duration / bin_time_duration)  # number of bin after the stimulus
 
-    channels = phase.labels()  # list of all the available channels
+    channels = phase.channels()  # list of all the available channels
 
     # get the number of digital channels. if it's different from 1 an error has occurred
     # during the recording phase
@@ -88,20 +97,23 @@ def psth(phase: PyPhase, bin_time_duration: float, psth_duration: float) -> np.n
     digital = phase.digital(0)
     # get the interval timestamps where the stimulation is active
     digital_intervals = get_digital_intervals(digital)
+    n_channels = 0
 
     for interval in digital_intervals:
         for channel in channels:
-            res = np.add(
-                res,
-                subsample_range(
-                    phase.peak_train(channel, None, None)[0],
-                    interval[0],
-                    bin_size,
-                    n_bins,
-                ),
-            )
+            if channel not in excluded_channels:
+                n_channels += 1
+                res = np.add(
+                    res,
+                    subsample_range(
+                        phase.peak_train(channel, None, None)[0],
+                        interval[0],
+                        bin_size,
+                        n_bins,
+                    ),
+                )
 
-    return res / (len(channels) * len(digital_intervals))
+    return res / (n_channels * n_bins)
 
 
 def burst_detection(

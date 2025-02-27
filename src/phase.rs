@@ -194,14 +194,14 @@ impl PhaseTrait<Channel> for Phase {
         };
         let actual_end = match end {
             Some(val) => val,
-            None => self.datalen() - 1,
+            None => self.datalen(),
         };
 
         if actual_start >= actual_end {
             return Err(SpikeError::RawDataStartIsAfterEnd);
         }
 
-        if actual_end >= self.datalen() {
+        if actual_end > self.datalen() {
             return Err(SpikeError::RawDataOutOfBounds);
         }
 
