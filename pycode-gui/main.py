@@ -1,9 +1,8 @@
-from typing import Optional
-
 import sys
 import os
 from PySide6 import QtWidgets as qtw
 from pathlib import Path
+from memory import Memory
 
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 resources_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), './resources'))
@@ -18,33 +17,24 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
+        Memory.register_main_window(self)
 
         self.action_Quit.triggered.connect(self.close)
         self.action_Open.triggered.connect(self.open_phase_test)
-        self.tabWidget.tabCloseRequested.connect(self.close_tab)
-
-    def add_tab(self, widget: qtw.QWidget, label: str, index: Optional[int] = None):
-        if index is None:
-            index = self.tabWidget.count()
-        self.tabWidget.insertTab(index, widget, label)
-
-    def close_tab(self, index: int):
-        label = self.tabWidget.tabText(index)
-        if label == "Welcome":
-            self.tabWidget.removeTab(index)
-        else:
-            self.tabWidget.removeTab(index)
+        self.tabWidget.tabCloseRequested.connect(Memory.close_tab)
 
     def open_phase_test(self):
         file_name = Path('/home/leonardo/Documents/unige/data/Cardio/11-02-2025/41599/0002_US_50.h5')
-        self.add_tab(PhaseExplorer(f"{file_name}"), file_name.name)
+        Memory.add_phase(file_name)
+        phase_explorer = PhaseExplorer(file_name)
+        Memory.add_tab(phase_explorer, file_name.name, file_name)
 
     def open_phase(self):
         file_name = Path(qtw.QFileDialog.getOpenFileName(None, "Select the phase file")[0])
-        phase_explorer_name = file_name.name
-        phase_explorer = PhaseExplorer(f"{file_name}")
+        Memory.add_phase(file_name)
+        phase_explorer = PhaseExplorer(file_name)
         if phase_explorer is not None:
-            self.add_tab(phase_explorer, phase_explorer_name)
+            Memory.add_tab(phase_explorer, file_name.name, file_name)
 
 
 if __name__=='__main__':

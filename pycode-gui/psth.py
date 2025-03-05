@@ -1,5 +1,6 @@
 from forms.psth import Ui_Psth
 from pycode.operations import psth as py_psth
+from memory import Memory
 
 from PySide6 import QtWidgets as qtw
 import numpy as np
@@ -23,7 +24,7 @@ class Psth(qtw.QWidget, Ui_Psth):
         except Exception as e:
             print(e)
             
-        phase = PyCodeGui.get_phase(self.phase_id).handler
+        phase = Memory.get_phase_handler(self.phase_id)
         psth_x = np.arange(0, total_dur, bin_dur)
         psth = py_psth(phase, bin_dur, total_dur)
         n_stim = int(psth_dur/bin_dur)

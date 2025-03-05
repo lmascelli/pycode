@@ -1,45 +1,17 @@
 import builtins
-from pycode import PyPhase
-from typing import Any, Dict, Optional
-from pathlib import Path
 
-class PyCodeGuiPhase:
-    def __init__(self, file_path: Path):
-        try:
-            self.handler = PyPhase(file_path)
-        except Exception as e:
-            print(e)
-            return None
-        self.peak_train = None
-        self.burst_train = None
+# Personally i prefer to manage the memory by myself and i'm not always Sure
+# about how Python pass or share arguments if by copy or by reference. So i've
+# allocated a global variable called 'PyCodeData'. It is a dictionary which
+# stores all the information shared between the various widgets and the State of
+# the program. The 'PyCodeData' variable is not meant to be accessed directly
+# but by the use of the Memory class in the memory module that contains the
+# static methods used to access and modify the dictionary values in a checked
+# manner.
+PyCodeData = {
+    "PHASES": {},
+    "MainWindow": None,
+    "Tabs": {},
+}
 
-class _PyCodeGui:
-    def __init__(self):
-        self.variables: Dict[str, Any] = {
-            # Add a collection of the handlers for the opened phases The key for
-            # each phase is the Path of the hdf5 file containing the data and
-            # with Path i mean an instance of the Path class in the pathlib
-            # module not just a string with the path of the file
-            "PHASES": {},
-        }
-
-    def set(self, variable: str, property_value: Any):
-        self.variables[variable] = property_value
-
-    def get(self, variable: str) -> Optional[Any]:
-        if variable in self.variables:
-            return self.variables[variable]
-        else:
-            return None
-
-    def add_phase(self, file_path: Path):
-        handler = PyCodeGuiPhase(file_path)
-        if handler is not None:
-            self.variables["PHASES"][file_path] = handler
-        else:
-            print(f"Failed opening the phase at {file_path}")
-
-    def get_phase(self, file_path: Path):
-        return self.get("PHASES")[file_path]
-
-setattr(builtins, "PyCodeGui", _PyCodeGui())
+setattr(builtins, "PyCodeData", PyCodeData)

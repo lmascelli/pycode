@@ -1,5 +1,6 @@
 from typing import Any, Dict
 from forms.peak_detection_tab import Ui_PeakDetection
+from memory import Memory
 from pycode.operations import (
     compute_threshold,
     clear_peaks_over_threshold,
@@ -30,9 +31,9 @@ class PeakDetection(qtw.QWidget, Ui_PeakDetection):
         self.btn_save.clicked.connect(self.save_peaks)
 
     def compute_peak_trains_ptsd(self):
-        phase = PyCodeGui.get_phase(self.phase_id)
-        channels = phase.handler.channels()
-        sampling_frequency = phase.handler.sampling_frequency()
+        phase_handler = Memory.get_phase_handler(self.phase_id)
+        channels = phase_handler.channels()
+        sampling_frequency = phase_handler.sampling_frequency()
         global ndevs, peak_duration, peak_distance
         global min_threshold
         ndevs = None
@@ -66,7 +67,7 @@ class PeakDetection(qtw.QWidget, Ui_PeakDetection):
             self.lbl_output.setTextCursor(cursor)
             qtc.QCoreApplication.processEvents()
 
-            data = phase.handler.raw_data(channel)
+            data = phase_handler.raw_data(channel)
             threshold = compute_threshold(data, sampling_frequency, ndevs, min_threshold)
             global peak_times, peak_values
             peak_times, peak_values = spike_detection(
@@ -75,12 +76,12 @@ class PeakDetection(qtw.QWidget, Ui_PeakDetection):
             if artifact_threshold is not None:
                 peak_times, peak_values = clear_peaks_over_threshold(peak_times, peak_values, artifact_threshold)
 
-            phase.peak_train[channel] = (peak_times, peak_values)
+            Memory.set_phase_peak_train(self.phase_id, channel, (peak_times, peak_values))
 
     def save_peaks(self):
-        phase = PyCodeGui.get_phase(self.phase_id)
-        for channel in phase.handler.channels():
-            phase.handler.set_peak_train(
+        phase_handler = Memory.get_phase_handler(self.phase_id)
+        for channel in phase_handler.channels():
+            phase_handler.set_peak_train(
                 channel,
-                phase.peak_train[channel],
+                Memory.get_phase_peak_train(self.phase_id, channel),
             )

@@ -2,15 +2,20 @@
 
 * GUI
 
-** Variabile globale associata alla fase
-*** Da aggiornare la chiusura delle tab relative ad una fase
-*** Da aggiornare in base a questi spikes:
-- lo scatter nel channel viewer
-- la conta degli spikes 
+** TODO Sistema di controllo dati globale
+Il principale problema è che più schede possono riferirsi alla stessa fase ed agli stessi dati che sono già stati calcolati riguardo ad esse, ad esempio gli spike.
+Bisogna quindi trovare un modo per centralizzare i dati a cui le varie schede si riferiscono ed tenere conto di chi ancora si sta riferendo a quei dati; quando
+nessuno ci si riferisce più è possibile eliminarli.
 
-** widget di analisi
+*** TODO I tab widget devono essere creati e distrutti da un controller che si occupi anche di tenere conto dei reference ai dati
+Tenere conto dei tab widget significa per ora sapere a quali dati (fase) si riferiscono. Potrebbe quindi essere utile associare in un dizionario l'indice della
+posizione dei widget alla fase a cui si riferiscono così da incrementare le reference alla creazione e decrementarle alla distruzione.
 
-** widget di salvataggio dati
+*** TODO Aggiungere add_reference e remove_reference per ogni widget
+
+** TODO widget di analisi
+
+** TODO widget di salvataggio dati
 Pensare ad una tabella o struttura che permetta di salvare dati relativi a più fasi
 
-** unita nelle intestazioni
+** TODO lista di unita di misura da mettere

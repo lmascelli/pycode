@@ -8,6 +8,7 @@ import numpy as np
 from pycode import PyChannel
 from pycode.operations import get_digital_intervals
 from canvas import MplCanvas
+from memory import Memory
 
 
 class PlotData:
@@ -17,7 +18,7 @@ class PlotData:
 
 class ChannelViewer(qtw.QWidget, Ui_ChannelViewer):
     def __init__(self, phase_id: Path, start_channel: PyChannel):
-        self.phase = PyCodeGui.get_phase(phase_id)
+        self.phase_id = phase_id
         self.start_channel = start_channel
         super().__init__()
         self.setupUi(self)
@@ -33,9 +34,10 @@ class ChannelViewer(qtw.QWidget, Ui_ChannelViewer):
         axe.clear()
 
         # get data
-        data = np.array(self.phase.handler.raw_data(self.start_channel))
-        datalen = self.phase.handler.datalen()
-        sampling_frequency = self.phase.handler.sampling_frequency()
+        phase_handler = Memory.get_phase_handler(self.phase_id)
+        data = np.array(phase_handler.raw_data(self.start_channel))
+        datalen = phase_handler.datalen()
+        sampling_frequency = phase_handler.sampling_frequency()
 
         # adjust axis scale
         # X axis
@@ -75,7 +77,7 @@ class ChannelViewer(qtw.QWidget, Ui_ChannelViewer):
 
         match self.chk_peaks.checkState():
             case qtc.Qt.CheckState.Checked:
-                peak_times, peak_values = self.phase.peak_train[self.start_channel]
+                peak_times, peak_values = Memory.get_phase_peak_train(self.phase_id, self.start_channel)
                 peak_times = np.array(peak_times) * x_scale
                 peak_values = np.array(peak_values) * y_scale
                 axe.scatter(peak_times, peak_values, color="r")
@@ -83,8 +85,8 @@ class ChannelViewer(qtw.QWidget, Ui_ChannelViewer):
                 pass
         match self.chk_digital.checkState():
             case qtc.Qt.CheckState.Checked:
-                if self.phase.handler.n_digitals() == 1:
-                    digital = self.phase.handler.digital(0)
+                if phase_handler.n_digitals() == 1:
+                    digital = phase_handler.digital(0)
                     intervals = get_digital_intervals(digital)
                     ylim = axe.get_ylim()
                     for interval in intervals:
