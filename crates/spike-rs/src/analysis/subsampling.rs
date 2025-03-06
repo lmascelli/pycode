@@ -21,6 +21,9 @@ pub fn subsample_range(
     bin_size: usize,
     n_bins: usize,
 ) -> Vec<usize> {
+    if n_bins == 0 {
+        return vec![];
+    }
     let mut ret = vec![0; n_bins as usize];
     let mut current_bin_index = 0;
     let mut current_bin_start = starting_sample;

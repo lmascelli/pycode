@@ -3,12 +3,12 @@ import atexit
 import builtins
 
 from .pycode import (
-    PyChannel,
-    PyPhase,
-    init,
-    close,
-    logspace,
-    lowess,
+    PyChannel,  # noqa: F401
+    PyPhase,  # noqa: F401
+    init,  # noqa: F401
+    close,  # noqa: F401
+    # logspace,  # noqa: F401
+    # lowess,  # noqa: F401
 )
 
 init()
@@ -31,6 +31,6 @@ class _PyCode:
 
 setattr(builtins, "PyCode", _PyCode())
 
-from . import operations
-from . import utils
-from . import settings
+from . import operations  # noqa: E402,F401
+from . import utils  # noqa: E402,F401
+from . import settings  # noqa: E402,F401

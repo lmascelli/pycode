@@ -72,6 +72,7 @@ class Memory:
                 "handler": handler,
                 "peak_train": None,
                 "burst_train": None,
+                "excluded_channels": [],
                 "references": 0,
             }
             return True

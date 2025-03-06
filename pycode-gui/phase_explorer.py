@@ -126,7 +126,7 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
         fig = plt.figure()
         ax = fig.subplots(1)
         phase = Memory.get_phase_handler(self.phase_id)
-        rasterplot(phase, ax)
+        rasterplot(phase, ax, fig)
         plt.show()
 
     def open_peak_detection(self):

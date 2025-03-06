@@ -275,7 +275,7 @@ pub fn spike_detection_new(
     left_boundary += window_size;
     right_boundary += window_size;
 
-    while left_boundary < data_len {
+    while left_boundary <= data_len {
         // look for min and max inside the window and store their values and
         // indices
         for index in left_boundary..right_boundary {
@@ -328,6 +328,7 @@ pub fn spike_detection_new(
             left_boundary += window_size;
             right_boundary += window_size;
         }
+        println!("{left_boundary}, {right_boundary}, {window_size}");
     }
 
     Ok((peak_times, peak_values))

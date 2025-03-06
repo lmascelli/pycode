@@ -1,5 +1,33 @@
 * PyCode
 
+** TODO Correggere l'ampiezza delle peak detection
+
+** TODO Nuovo algoritmo di peak detection
+
+*** TODO trovare la causa del blocco del loop
+
+*** TODO il risultato deve essere un vettore di quartetti di punti (min_pos, max_pos, min_val, max_val)
+
+** TODO Fornire ampiezza media spike
+
+** TODO Campionamento mfr e sincronizzazione sul digitale
+1. Suddividere il segnale in intervalli (x_{i}, x_{i }+ h) con h parametro.
+2. Se il segnale è digitale la suddivisione deve essere sincronizzata con il segnale digitale percui:
+   1. il segnale va suddiviso negli intervalli consistenti di periodo di stimolazione + non stimolazione
+   2. questi intervalli vanno suddivisi in (x_{i, j}, x_{i, j }+ h)
+   3. anche la testa del segnale prima del primo intervallo va suddivisa
+   4. gli intervalli così ottenuti vanno concatenati in un'unica lista di intevalli
+
+** TODO Strumenti di pulizia del segnale
+
+*** TODO Rimozione sopra e sotto soglie prestabilite
+
+*** TODO Rimozione in una finestra attorno ad un punto
+questo serve per togliere gli artefatti generati ad inizio e fine della stimolazione, quindi chiamando
+questa funzione sulla lista degli intervalli di stimolazione dovrebbe essere possibile togliere gli
+artefatti causati dall'accensione e spegnimento del generatore di ultrasuoni senza dover basarsi su
+una soglia che varia da canale a canale, da esperimento ad esperimento.
+
 * GUI
 
 ** TODO Sistema di controllo dati globale
@@ -7,15 +35,21 @@ Il principale problema è che più schede possono riferirsi alla stessa fase ed 
 Bisogna quindi trovare un modo per centralizzare i dati a cui le varie schede si riferiscono ed tenere conto di chi ancora si sta riferendo a quei dati; quando
 nessuno ci si riferisce più è possibile eliminarli.
 
-*** TODO I tab widget devono essere creati e distrutti da un controller che si occupi anche di tenere conto dei reference ai dati
+*** DONE I tab widget devono essere creati e distrutti da un controller che si occupi anche di tenere conto dei reference ai dati
 Tenere conto dei tab widget significa per ora sapere a quali dati (fase) si riferiscono. Potrebbe quindi essere utile associare in un dizionario l'indice della
 posizione dei widget alla fase a cui si riferiscono così da incrementare le reference alla creazione e decrementarle alla distruzione.
 
-*** TODO Aggiungere add_reference e remove_reference per ogni widget
+
+** TODO selezione dei canali da escludere da GUI
+Bisogna trovare un modo comodo per poter escludere alcuni canali dalle analisi svolte da tutti
+i widget della GUI. Penso di inserire una lista di canali esclusi nelle informazioni della fase e poi richiamare quelle dai vari widget
+
+** TODO visualizzazione dei canali nel rasterplot
+O a fianco o come informazioni nel puntatore del mouse bisogna vedere a quale canale corrisponde una linea del rasterplot HERE
 
 ** TODO widget di analisi
 
 ** TODO widget di salvataggio dati
 Pensare ad una tabella o struttura che permetta di salvare dati relativi a più fasi
 
-** TODO lista di unita di misura da mettere
+** DONE lista di unita di misura da mettere

@@ -20,7 +20,7 @@ class PyCodeMainWindow(qtw.QMainWindow, Ui_MainWindow):
         Memory.register_main_window(self)
 
         self.action_Quit.triggered.connect(self.close)
-        self.action_Open.triggered.connect(self.open_phase_test)
+        self.action_Open.triggered.connect(self.open_phase)
         self.tabWidget.tabCloseRequested.connect(Memory.close_tab)
 
     def open_phase_test(self):

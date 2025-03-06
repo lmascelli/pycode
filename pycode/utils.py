@@ -1,6 +1,6 @@
 from typing import List, Optional, Iterable, Tuple
 from .pycode import PyChannel, PyPhase
-from matplotlib.figure import Axes
+from matplotlib.figure import Axes, Figure
 import numpy as np
 
 
@@ -108,11 +108,18 @@ def plot_raw_with_spikes(
     )
 
 
-def rasterplot(phase: PyPhase, ax: Axes):
+def rasterplot(phase: PyPhase, ax: Axes, fig: Optional[Figure] = None):
     """
     TODO comment this function
     """
+
+    def on_mouse_move(event):
+        print(f"{event.ydata:.2f}")
+    
     spikes = []
     for channel in phase.channels():
         spikes.append(phase.peak_train(channel)[0][:])
     ax.eventplot(spikes)
+
+    if fig is not None:
+        fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
