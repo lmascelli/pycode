@@ -152,6 +152,19 @@ pub fn count_peaks_in_intervals(
 }
 
 #[pyfunction]
+pub fn find_peaks_around_points(
+    peak_times: Vec<usize>,
+    points: Vec<usize>,
+    window_half_size: usize,
+) -> Vec<usize> {
+    return spike_rs::analysis::cleaning::find_peaks_around_points(
+        &peak_times[..],
+        &points[..],
+        window_half_size,
+    );
+}
+
+#[pyfunction]
 pub fn logspace(start: f32, end: f32, n_points: usize) -> Vec<f32> {
     return spike_rs::operations::math::logspace(start, end, n_points);
 }
@@ -192,6 +205,7 @@ fn pycode_rs_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_function(wrap_pyfunction!(get_digital_intervals, m)?)?;
     m.add_function(wrap_pyfunction!(count_peaks_in_intervals, m)?)?;
     m.add_function(wrap_pyfunction!(subsample_range, m)?)?;
+    m.add_function(wrap_pyfunction!(find_peaks_around_points, m)?)?;
     m.add_function(wrap_pyfunction!(logspace, m)?)?;
     m.add_function(wrap_pyfunction!(lowess, m)?)?;
     m.add_function(wrap_pyfunction!(burst_detection, m)?)?;

@@ -10,13 +10,16 @@
 
 ** TODO Fornire ampiezza media spike
 
-** TODO Campionamento mfr e sincronizzazione sul digitale
+** DONE Campionamento mfr e sincronizzazione sul digitale
 1. Suddividere il segnale in intervalli (x_{i}, x_{i }+ h) con h parametro.
 2. Se il segnale è digitale la suddivisione deve essere sincronizzata con il segnale digitale percui:
    1. il segnale va suddiviso negli intervalli consistenti di periodo di stimolazione + non stimolazione
    2. questi intervalli vanno suddivisi in (x_{i, j}, x_{i, j }+ h)
    3. anche la testa del segnale prima del primo intervallo va suddivisa
    4. gli intervalli così ottenuti vanno concatenati in un'unica lista di intevalli
+
+
+** TODO Rappresentazione grafica del trend mfr
 
 ** TODO Strumenti di pulizia del segnale
 
