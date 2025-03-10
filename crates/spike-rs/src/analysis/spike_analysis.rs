@@ -381,7 +381,7 @@ pub mod logisi {
             .map(|x| *x as f32 / isi_len as f32)
             .collect::<Vec<f32>>();
 
-        let hist_norm = super::math::lowess(hist_values[..].as_ref(), 0.05);
+        let hist_norm = crate::operations::filter::lowess(hist_values[..].as_ref(), 0.05);
 
         // --------------------------------------------------------------------------
         // 3. get peaks

@@ -31,6 +31,8 @@ class _PyCode:
 
 setattr(builtins, "PyCode", _PyCode())
 
+from . import converting_rules  # noqa: E402,F401
 from . import operations  # noqa: E402,F401
 from . import utils  # noqa: E402,F401
 from . import settings  # noqa: E402,F401
+from . import experiment  # noqa: E402,F401

@@ -171,7 +171,7 @@ pub fn logspace(start: f32, end: f32, n_points: usize) -> Vec<f32> {
 
 #[pyfunction]
 pub unsafe fn lowess(data: Vec<f32>, span: f32) -> Vec<f32> {
-    return spike_rs::operations::math::lowess(data[..].as_ref(), span);
+    return spike_rs::operations::filter::lowess(data[..].as_ref(), span);
 }
 
 #[pyfunction]
