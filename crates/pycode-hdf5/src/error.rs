@@ -1,6 +1,6 @@
 use super::sys;
 use spike_rs::error::SpikeError;
- 
+
 /// All the variant of the Error type represent one of the possible event that
 /// can go wrong during the reading/writing of an hdf5 file containg data
 /// recorded with the MultiChannel Experimenter or MC_Rack software.
@@ -384,4 +384,3 @@ impl Error {
         }
     }
 }
-

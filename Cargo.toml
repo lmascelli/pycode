@@ -1,11 +1,13 @@
 [workspace]
-members = [ "crates/spike-rs", ]
+members = [
+        "crates/spike-rs",
+        "crates/pycode-hdf5/", "crates/pycode-hdf5",
+]
 
 [package]
 name = "pycode-rs"
 version = "0.1.0"
 edition = "2024"
-build = "build.rs"
 
 [lib]
 name = "pycode"
@@ -13,9 +15,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = "*"
-spike_rs = { path = "./crates/spike-rs"}
-
-[build-dependencies]
-cmake = "*"
-bindgen = "*"
-
+spike_rs = { path="crates/spike-rs" }
+pycode-hdf5 = { path="crates/pycode-hdf5" }

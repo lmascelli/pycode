@@ -1,15 +1,13 @@
 use super::channel::Channel;
-use super::channel::PyChannel;
 use super::error::Error;
 use super::peak_train::PeakTrain;
 use super::sys;
-use pyo3::prelude::*;
 use spike_rs::error::SpikeError;
 use spike_rs::types::PhaseTrait;
 use std::ffi::CString;
 
 pub struct Phase {
-    phase: sys::PhaseH5,
+    pub phase: sys::PhaseH5,
     pub filename: String,
     pub channels: Vec<Channel>,
 }
@@ -147,8 +145,8 @@ impl Phase {
     }
 
     pub fn peak_train_len(&self, channel: &Channel) -> usize {
-        let label_c =
-            CString::new(channel.label.clone()).expect("peak_train_len: Failed to convert the CStr");
+        let label_c = CString::new(channel.label.clone())
+            .expect("peak_train_len: Failed to convert the CStr");
         let mut len = 0usize;
         let res = unsafe {
             sys::peak_train_len(
@@ -302,11 +300,7 @@ impl PhaseTrait<Channel> for Phase {
     }
 
     fn n_digitals(&self) -> usize {
-        if self.phase.has_digital {
-            1
-        } else {
-            0
-        }
+        if self.phase.has_digital { 1 } else { 0 }
     }
 
     fn digital(
@@ -498,188 +492,6 @@ impl PhaseTrait<Channel> for Phase {
         match Error::from_phaseh5_error(res) {
             Ok(()) => Ok(()),
             Err(err) => Err(err.into()),
-        }
-    }
-}
-
-#[pyclass(unsendable)]
-pub struct PyPhase {
-    phase: Option<Phase>,
-}
-
-#[pymethods]
-impl PyPhase {
-    #[new]
-    pub fn new(filename: &str) -> Self {
-        PyPhase {
-            phase: Some(Phase::open(filename).expect(&format!("Failed to open {filename}"))),
-        }
-    }
-
-    pub fn date(&self) -> Option<String> {
-        match &self.phase {
-            Some(phase) => unsafe {
-                Some(
-                    std::ffi::CStr::from_ptr(phase.phase.date.as_ptr())
-                        .to_str()
-                        .expect("Failed to read the phase date")
-                        .to_owned(),
-                )
-            },
-            None => None,
-        }
-    }
-
-    pub fn datalen(&self) -> Option<usize> {
-        match &self.phase {
-            None => None,
-            Some(phase) => Some(phase.datalen()),
-        }
-    }
-
-    pub fn sampling_frequency(&self) -> Option<f32> {
-        match &self.phase {
-            None => None,
-            Some(phase) => Some(phase.sampling_frequency()),
-        }
-    }
-
-    pub fn channels(&self) -> Option<Vec<PyChannel>> {
-        match &self.phase {
-            None => None,
-            Some(phase) => Some(
-                phase
-                    .channels()
-                    .iter()
-                    .map(|c| PyChannel { channel: c.clone() })
-                    .collect(),
-            ),
-        }
-    }
-
-    #[pyo3(signature = (channel, start=None, end=None))]
-    pub fn raw_data(
-        &self,
-        channel: &PyChannel,
-        start: Option<usize>,
-        end: Option<usize>,
-    ) -> Option<Vec<f32>> {
-        match &self.phase {
-            None => None,
-            Some(phase) => match phase.raw_data(&channel.channel, start, end) {
-                Ok(res) => Some(res),
-                Err(err) => {
-                    println!("{err:?}");
-                    None
-                }
-            },
-        }
-    }
-    #[pyo3(signature = (channel, data, start=None))]
-    pub fn set_raw_data(
-        &mut self,
-        channel: &PyChannel,
-        data: Vec<f32>,
-        start: Option<usize>,
-    ) -> Option<bool> {
-        match &mut self.phase {
-            None => None,
-            Some(phase) => match phase.set_raw_data(&channel.channel, start, data[..].as_ref()) {
-                Ok(()) => Some(true),
-                Err(err) => {
-                    println!("{err:?}");
-                    Some(false)
-                }
-            },
-        }
-    }
-
-    pub fn n_digitals(&self) -> Option<usize> {
-        match &self.phase {
-            None => None,
-            Some(phase) => Some(phase.n_digitals()),
-        }
-    }
-
-    #[pyo3(signature = (index, start=None, end=None))]
-    pub fn digital(
-        &self,
-        index: usize,
-        start: Option<usize>,
-        end: Option<usize>,
-    ) -> Option<Vec<f32>> {
-        match &self.phase {
-            None => None,
-            Some(phase) => match phase.digital(index, start, end) {
-                Ok(ret) => Some(ret),
-                Err(err) => {
-                    println!("{err:?}");
-                    None
-                }
-            },
-        }
-    }
-
-    #[pyo3(signature = (index, data, start=None))]
-    pub fn set_digital(
-        &mut self,
-        index: usize,
-        data: Vec<f32>,
-        start: Option<usize>,
-    ) -> Option<bool> {
-        match &mut self.phase {
-            None => None,
-            Some(phase) => match phase.set_digital(index, start, data[..].as_ref()) {
-                Ok(()) => Some(true),
-                Err(err) => {
-                    println!("{err:?}");
-                    Some(false)
-                }
-            },
-        }
-    }
-
-    pub fn n_events(&self) -> Option<usize> {
-        match &self.phase {
-            None => None,
-            Some(phase) => Some(phase.n_events()),
-        }
-    }
-
-    #[pyo3(signature = (channel, start=None, end=None))]
-    pub fn peak_train(
-        &self,
-        channel: &PyChannel,
-        start: Option<usize>,
-        end: Option<usize>,
-    ) -> Option<(Vec<usize>, Vec<f32>)> {
-        match &self.phase {
-            None => None,
-            Some(phase) => match phase.peak_train(&channel.channel, start, end) {
-                Ok(ret) => Some(ret),
-                Err(err) => {
-                    println!("{err:?}");
-                    None
-                }
-            },
-        }
-    }
-
-    #[pyo3(signature = (channel, data))]
-    pub fn set_peak_train(
-        &mut self,
-        channel: &PyChannel,
-        data: (Vec<usize>, Vec<f32>),
-    ) -> Option<bool> {
-        match &mut self.phase {
-            None => None,
-            Some(phase) => match phase.set_peak_train(&channel.channel, data) {
-                Ok(()) => Some(true),
-                Err(err) => {
-                    println!("{err:?}");
-                    Some(false)
-                }
-            },
         }
     }
 }

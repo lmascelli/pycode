@@ -102,14 +102,11 @@ use crate::{
 /// Count the peaks in the provided intervals.
 /// INTERVALS are in the form of (start, end) times of the interval.
 /// Returns a vector with the number of peaks in each interval.
-/// 
+///
 /// WARNINGS: for optimization purposes this function assumes that the spikes
 /// are sorted in increasing order and the intervals too so that it can avoid to
 /// scroll the peak train for each interval from the start
-pub fn count_peaks_in_intervals(
-    peak_times: &[usize],
-    intervals: &[(usize, usize)],
-) -> Vec<usize> {
+pub fn count_peaks_in_intervals(peak_times: &[usize], intervals: &[(usize, usize)]) -> Vec<usize> {
     let peaks_len = peak_times.len();
     let intervals_len = intervals.len();
     let mut ret = vec![0; intervals_len];
@@ -120,8 +117,9 @@ pub fn count_peaks_in_intervals(
         let current_peak = peak_times[peak_index];
         if current_peak < intervals[interval_index].0 {
             peak_index += 1;
-        }
-        else if current_peak >= intervals[interval_index].0 && current_peak <= intervals[interval_index].1 {
+        } else if current_peak >= intervals[interval_index].0
+            && current_peak <= intervals[interval_index].1
+        {
             peak_count += 1;
             peak_index += 1;
         } else if current_peak > intervals[interval_index].1 {

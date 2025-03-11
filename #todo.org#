@@ -1,5 +1,5 @@
 * Global
-** TODO Move the hdf5 implementation part of the spike-rs handler to a separate crate
+** TODO <2025-03-11 9:00-12:00> Move the hdf5 implementation part of the spike-rs handler to a separate crate
 I prefer to keep the implementation of the spike-rs trait for the hdf5 handler separated from
 its python wrapper so that the python wrapper still remain the last artifact of the build but
 the hdf5 handler can be build as a separate crate/library.

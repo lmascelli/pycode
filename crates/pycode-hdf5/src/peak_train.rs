@@ -1,5 +1,5 @@
-use super::sys;
 use super::error::Error;
+use super::sys;
 
 pub struct PeakTrain {
     pub samples: Vec<usize>,

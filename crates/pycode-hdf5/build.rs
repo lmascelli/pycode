@@ -9,25 +9,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // let hdf5_bin_dir =
     //     env::var("HDF5_BIN_DIR").expect("Please set the `HDF5_BIN_DIR` environment variable");
 
-    println!("cargo:rerun-if-changed=c_pycode/pycode_h5.c");
-    println!("cargo:rerun-if-changed=c_pycode/pycode_h5.h");
-    println!("cargo:rerun-if-changed=c_pycode/CMakeLists.txt");
+    println!("cargo:rerun-if-changed=../../c_pycode/pycode_h5.c");
+    println!("cargo:rerun-if-changed=../../c_pycode/pycode_h5.h");
+    println!("cargo:rerun-if-changed=../../c_pycode/CMakeLists.txt");
 
-    let mut build = cmake::Config::new("./c_pycode");
+    let mut build = cmake::Config::new("../../c_pycode");
     let c_pycode_location = build.profile("Release").build();
 
     // **********************************************************************
     // use BINDGEN to generate binding to c_pycode
     // **********************************************************************
     let bindings = bindgen::Builder::default()
-        .header("c_pycode/pycode_h5.h")
+        .header("../../c_pycode/pycode_h5.h")
         .clang_arg(format!("-I{}", hdf5_include_dir))
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings");
-    
+
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    
+
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings");

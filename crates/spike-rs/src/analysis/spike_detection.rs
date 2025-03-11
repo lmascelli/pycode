@@ -207,11 +207,11 @@ pub fn spike_detection_new(
     peak_distance: usize,
 ) -> Result<(Vec<usize>, Vec<f32>), SpikeError> {
     let data_len = data.len();
-    
-    if data_len< 2 {
+
+    if data_len < 2 {
         return Err(SpikeError::SpikeDetectionTooFewSamples);
     }
-    
+
     // Here it is allocated the storage for the return values of peak times an
     // amplitude. For increasing performance the maximum number of possible peaks
     // that can be found has been reserved. If there is exactly one peak every
@@ -243,7 +243,7 @@ pub fn spike_detection_new(
     // Now let's scroll a window of width peak_duration though the data
 
     let window_size = peak_duration / 2;
-    
+
     // USED VARIABLES
     let mut left_boundary = 0;
     let mut right_boundary = window_size.min(data_len);
@@ -296,7 +296,7 @@ pub fn spike_detection_new(
             min_min = previous_min;
             min_min_index = previous_min_index;
         }
-        
+
         if max < previous_max {
             max_max = max;
             max_max_index = max_index;
