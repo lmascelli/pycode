@@ -12,6 +12,7 @@ build.el
 **/__pycache__/
 **/target
 test.py
+test.csv
 /install/
 /.ropeproject/
 /.mypy_cache/
