@@ -15,13 +15,23 @@ if channel is not None:
     ax.plot(data)
     if WITH_SPIKES:
         peak_times, peak_values = phase.peak_train(channel)
-        ax.scatter(peak_times, peak_values, color = "red")
+        ax.scatter(peak_times, peak_values, color="red")
 
     if WITH_DIGITAL:
         digital = phase.digital(0)
         intervals = pc.operations.get_digital_intervals(digital)
         ymin, ymax = ax.get_ylim()
         for start, end in intervals:
-            ax.add_patch(Rectangle((start, ymin), end-start, ymax-ymin, fill=True, alpha=0.3, linewidth=3, color="brown"))
+            ax.add_patch(
+                Rectangle(
+                    (start, ymin),
+                    end - start,
+                    ymax - ymin,
+                    fill=True,
+                    alpha=0.3,
+                    linewidth=3,
+                    color="brown",
+                )
+            )
 
     plt.show()

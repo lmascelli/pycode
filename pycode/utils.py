@@ -36,6 +36,7 @@ def create_excluded_list(
             ret.append(channel)
     return ret
 
+
 def create_excluded_list_with_groups(
     excluded_list: Iterable[Tuple[int, Iterable[str]]],
     channels: Iterable[PyChannel],
@@ -84,7 +85,7 @@ def plot_raw_with_spikes(
 
     @Parameters:
     - phase: the phase of
-    
+
     """
 
     raw_data = phase.raw_data(channel, start, end)
@@ -115,11 +116,11 @@ def rasterplot(phase: PyPhase, ax: Axes, fig: Optional[Figure] = None):
 
     def on_mouse_move(event):
         print(f"{event.ydata:.2f}")
-    
+
     spikes = []
     for channel in phase.channels():
         spikes.append(phase.peak_train(channel)[0][:])
     ax.eventplot(spikes)
 
     if fig is not None:
-        fig.canvas.mpl_connect('motion_notify_event', on_mouse_move)
+        fig.canvas.mpl_connect("motion_notify_event", on_mouse_move)

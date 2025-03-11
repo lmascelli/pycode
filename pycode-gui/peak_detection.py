@@ -13,6 +13,7 @@ from PySide6 import QtGui as qtg
 
 from pathlib import Path
 
+
 class Preset:
     def __init__(self, val: Dict[str, Any]):
         try:
@@ -21,6 +22,7 @@ class Preset:
             self.peak_distance = float(val["refractary period"])
         except Exception as e:
             print(e)
+
 
 class PeakDetection(qtw.QWidget, Ui_PeakDetection):
     def __init__(self, phase_id: Path):
@@ -68,15 +70,21 @@ class PeakDetection(qtw.QWidget, Ui_PeakDetection):
             qtc.QCoreApplication.processEvents()
 
             data = phase_handler.raw_data(channel)
-            threshold = compute_threshold(data, sampling_frequency, ndevs, min_threshold)
+            threshold = compute_threshold(
+                data, sampling_frequency, ndevs, min_threshold
+            )
             global peak_times, peak_values
             peak_times, peak_values = spike_detection(
                 data, sampling_frequency, threshold, peak_duration, peak_distance
             )
             if artifact_threshold is not None:
-                peak_times, peak_values = clear_peaks_over_threshold(peak_times, peak_values, artifact_threshold)
+                peak_times, peak_values = clear_peaks_over_threshold(
+                    peak_times, peak_values, artifact_threshold
+                )
 
-            Memory.set_phase_peak_train(self.phase_id, channel, (peak_times, peak_values))
+            Memory.set_phase_peak_train(
+                self.phase_id, channel, (peak_times, peak_values)
+            )
 
     def save_peaks(self):
         phase_handler = Memory.get_phase_handler(self.phase_id)

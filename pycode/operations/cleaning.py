@@ -8,6 +8,7 @@ def find_peaks_around_points(
 ) -> List[int]:
     return py_find_peaks_around_points(peak_times, points, window_half_size)
 
+
 def remove_indices(original_list, indices_to_remove):
     """
     Removes elements from the original_list at the indices specified in indices_to_remove.
@@ -26,12 +27,15 @@ def remove_indices(original_list, indices_to_remove):
     new_list = list(original_list)  # Create a copy to avoid modifying the original list
 
     for index in indices_to_remove:
-        if 0 <= index < len(new_list): # Check if the index is valid
+        if 0 <= index < len(new_list):  # Check if the index is valid
             del new_list[index]
         else:
-            print(f"Warning: Index {index} is out of range.") #inform the user about invalid index
+            print(
+                f"Warning: Index {index} is out of range."
+            )  # inform the user about invalid index
 
     return new_list
+
 
 def clear_peaks_around_points(
     peak_times: List[int],
@@ -44,6 +48,7 @@ def clear_peaks_around_points(
     new_peak_values = remove_indices(peak_values, indices)
 
     return (new_peak_times, new_peak_values)
+
 
 def clear_peaks_over_threshold(
     peak_times: List[int], peak_values: List[float], upper_threshold

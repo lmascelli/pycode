@@ -2,12 +2,13 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import (
     FigureCanvasQTAgg as FigureCanvas,
-    NavigationToolbar2QT
+    NavigationToolbar2QT,
 )
 
 WIDTH = 5
 HEIGHT = 4
 DPI = 100
+
 
 class MplCanvas(QWidget):
     def __init__(self, rows: int, cols: int):

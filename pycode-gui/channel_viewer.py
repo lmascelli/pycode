@@ -77,7 +77,9 @@ class ChannelViewer(qtw.QWidget, Ui_ChannelViewer):
 
         match self.chk_peaks.checkState():
             case qtc.Qt.CheckState.Checked:
-                peak_times, peak_values = Memory.get_phase_peak_train(self.phase_id, self.start_channel)
+                peak_times, peak_values = Memory.get_phase_peak_train(
+                    self.phase_id, self.start_channel
+                )
                 peak_times = np.array(peak_times) * x_scale
                 peak_values = np.array(peak_values) * y_scale
                 axe.scatter(peak_times, peak_values, color="r")
@@ -114,7 +116,7 @@ class ChannelViewer(qtw.QWidget, Ui_ChannelViewer):
             xlim_ = [xlim_min, xlim_max]
         except Exception as e:
             print(e)
-        
+
         try:
             ylim_min = float(self.edt_y_min.text())
             ylim_max = float(self.edt_y_max.text())

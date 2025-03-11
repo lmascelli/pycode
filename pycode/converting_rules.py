@@ -49,7 +49,9 @@ class ConvertingValues:
     - s_cond   str          the additional info about the stimulation
     """
 
-    def __init__(self, matrice: str, cond: str, div: int, i: int, t: int, stim_cond: str = ""):
+    def __init__(
+        self, matrice: str, cond: str, div: int, i: int, t: int, stim_cond: str = ""
+    ):
         self.matrice = matrice
         self.cond = cond
         self.div = div
@@ -67,8 +69,10 @@ class ConvertingValues:
         stim_cond = {self.s_cond},
 }}"""
 
-    
-def rule_order_type_cond(name: str, matrix_name: str, cond: str, div: int) -> ConvertingValues:
+
+def rule_order_type_cond(
+    name: str, matrix_name: str, cond: str, div: int
+) -> ConvertingValues:
     """
     You may apply this rule with a lambda with the matrix, cond and div values.
     Example: 0001_basale.h5
@@ -92,14 +96,14 @@ def rule_order_type_cond(name: str, matrix_name: str, cond: str, div: int) -> Co
     }
     """
     first_ = name.find("_")
-    i = name[: first_]
+    i = name[:first_]
     second_ = name.find("_", first_ + 1)
     global t
     if second_ > 0:
-        t = name[first_ + 1: second_]
-        s_cond = name[second_ + 1:-3]
+        t = name[first_ + 1 : second_]
+        s_cond = name[second_ + 1 : -3]
     else:
-        t = name[first_ + 1: second_-2]
+        t = name[first_ + 1 : second_ - 2]
         s_cond = ""
     match t.upper():
         case "BASALE":
@@ -108,7 +112,9 @@ def rule_order_type_cond(name: str, matrix_name: str, cond: str, div: int) -> Co
             t = PhaseType.STIM
         case _:
             t = PhaseType.UNKNOWN
-    return ConvertingValues(matrice=matrix_name, cond=cond, div=div, i=i, t=t, stim_cond=s_cond)
+    return ConvertingValues(
+        matrice=matrix_name, cond=cond, div=div, i=i, t=t, stim_cond=s_cond
+    )
 
 
 def rule1(name: str, matrix_name: str, cond: str, div: int) -> ConvertingValues:

@@ -40,7 +40,7 @@ class Phase:
                 self.cell_condition = converting_value.cond
                 self.phase_type = converting_value.t
                 self.stim_param = converting_value.s_cond
-                
+
             except Exception as e:
                 print(e)
 
@@ -64,12 +64,16 @@ class Experiment:
         self.phases: List[Phase] = []
 
         # cicle for all phases in the folder
-        
+
         for phase_file in listdir(root_folder):
             if phase_file.endswith(".h5"):
-                self.phases.append(Phase(root_folder.joinpath(phase_file),
-                                         lambda p: converting_rule(p, "41599", "Cardio", "5")))
+                self.phases.append(
+                    Phase(
+                        root_folder.joinpath(phase_file),
+                        lambda p: converting_rule(p, "41599", "Cardio", "5"),
+                    )
+                )
 
         # order phases by position
 
-        self.phases = sorted(self.phases, key = lambda p: p.position)
+        self.phases = sorted(self.phases, key=lambda p: p.position)

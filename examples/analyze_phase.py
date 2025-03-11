@@ -20,17 +20,25 @@ for phase_file in sorted(listdir(BASEDIR)):
         digital_duration = None
         if with_digital:
             intervals = pc.operations.get_digital_intervals(phase.digital(0))
-            digital_duration = sum(map(lambda i: i[1]-i[0], intervals)) / phase.sampling_frequency()
-        for channel in filter(lambda c: pc.utils.check_excluded_channel(c, EXCLUDED_CHANNELS), phase.channels()):
+            digital_duration = (
+                sum(map(lambda i: i[1] - i[0], intervals)) / phase.sampling_frequency()
+            )
+        for channel in filter(
+            lambda c: pc.utils.check_excluded_channel(c, EXCLUDED_CHANNELS),
+            phase.channels(),
+        ):
             channel_results = {}
             peak_times, peak_values = phase.peak_train(channel)
             channel_results["n_spikes"] = len(peak_times)
-            channel_results["mfr"] = len(peak_times)/datalen
+            channel_results["mfr"] = len(peak_times) / datalen
             if with_digital:
-                channel_results["mfr_digital"] = sum(pc.operations.count_peaks_in_intervals(peak_times, intervals)) / digital_duration
+                channel_results["mfr_digital"] = (
+                    sum(pc.operations.count_peaks_in_intervals(peak_times, intervals))
+                    / digital_duration
+                )
             phase_results[f"{channel.label()}"] = channel_results
         results[f"{phase_file.name}"] = phase_results
-            
+
 for result in results:
     pp(results[result])
     input(">> ")

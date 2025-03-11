@@ -10,8 +10,10 @@ This is a collection of static methods to interact with the
 memory of the various elements managed by the GUI.
 """
 
+
 def _get_pycode_data():
     return PyCodeData  # noqa: F821
+
 
 class Memory:
     def __init__(self):
@@ -31,16 +33,21 @@ class Memory:
 
     ##################################################
     # TAB MANAGEMENT
-        
+
     def get_tabs():
         return _get_pycode_data()["Tabs"]
 
-    def add_tab(widget: qtw.QWidget, label: str, phase_id: Path, index: Optional[int] = None,
-                close_callback: Optional[Callable] = None):
+    def add_tab(
+        widget: qtw.QWidget,
+        label: str,
+        phase_id: Path,
+        index: Optional[int] = None,
+        close_callback: Optional[Callable] = None,
+    ):
         window = Memory.get_main_window()
         if index is None:
             index = window.tabWidget.count()
-        
+
         Memory.get_tabs()[index] = (phase_id, close_callback)
         Memory.add_reference(phase_id)
         window.tabWidget.insertTab(index, widget, label)
@@ -59,14 +66,17 @@ class Memory:
 
     ##################################################
     # DATA MANAGEMENT
-        
+
     def add_phase(file_path: Path) -> bool:
         """
         Add a phase to the global space. If the phase isn't already present it
         load it from the filesystem, initialize the peak and burst values and
         returns True, otherwise it leaves it untouched and returns False.
         """
-        if file_path not in _get_pycode_data()["PHASES"].keys() or _get_pycode_data()["PHASES"][file_path] is None:
+        if (
+            file_path not in _get_pycode_data()["PHASES"].keys()
+            or _get_pycode_data()["PHASES"][file_path] is None
+        ):
             handler = PyPhase(f"{file_path}")
             _get_pycode_data()["PHASES"][file_path] = {
                 "handler": handler,

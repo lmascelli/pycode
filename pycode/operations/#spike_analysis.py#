@@ -163,13 +163,6 @@ def channel_psth(
 
     n_bins = int(psth_duration / bin_time_duration)  # number of bin after the stimulus
 
-    # get the number of digital channels. if it's different from 1 an error has occurred
-    # during the recording phase
-    n_digital = phase.n_digitals()
-    if n_digital != 1:
-        exit(
-            f"ERROR: the stimulation phase has {n_digital} digital channels (grazie MultiChannel)"
-        )
 
     global res
     res = np.zeros(n_bins)  # variable to accumulate the psth

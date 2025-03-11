@@ -108,12 +108,19 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
         self.btn_rasterplot.clicked.connect(self.rasterplot)
         self.btn_peak_detection.clicked.connect(self.open_peak_detection)
         self.btn_psth.clicked.connect(self.psth)
-        
+
     def open_channel(self, arg: qtc.QModelIndex):
         channel_label = f"{self.channels_model.itemData(arg.sibling(arg.row(), 1))[0]}"
-        channel_group = int(f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}")
+        channel_group = int(
+            f"{self.channels_model.itemData(arg.sibling(arg.row(), 0))[0]}"
+        )
         phase = Memory.get_phase_handler(self.phase_id)
-        channel = next(filter(lambda c: c.group() == channel_group and c.label() == channel_label, phase.channels()))
+        channel = next(
+            filter(
+                lambda c: c.group() == channel_group and c.label() == channel_label,
+                phase.channels(),
+            )
+        )
         if channel is not None:
             channel_viewer = ChannelViewer(self.phase_id, channel)
             Memory.add_tab(
@@ -135,4 +142,4 @@ class PhaseExplorer(qtw.QWidget, Ui_PhaseExplorer):
 
     def psth(self):
         psth_tab = Psth(self.phase_id)
-        Memory.add_tab(psth_tab, "Psth", self.phase_id) 
+        Memory.add_tab(psth_tab, "Psth", self.phase_id)
