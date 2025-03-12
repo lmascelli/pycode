@@ -1,5 +1,5 @@
 from forms.psth import Ui_Psth
-from pycode.operations import psth as py_psth
+from pycode.operations.spike_analysis import psth as py_psth
 from memory import Memory
 
 from PySide6 import QtWidgets as qtw

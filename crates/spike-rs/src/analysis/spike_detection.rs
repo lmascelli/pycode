@@ -70,6 +70,47 @@ pub fn spike_detection(
     let mut peak_end_value;
 
     while index < data_length - 1 {
+        // By the way the maximum and minimum that belongs to a peak are found
+        // all the found i assume that all the maximum are positive and all the
+        // minimum are negative so that an offset on the signal will invalidate
+        // the peak detection. Otherwise a minimum can be in the form:
+        //                 .
+        //                   .        ...
+        //                     .    .
+        //                      . .
+        //                       .
+        // 
+        // -------------------------------------------------------------
+        //
+        //
+
+        // data[index - 1] > data[index] && data[index] < data[index + 1]
+        // with data[index - 1], data[index], data[index + 1] >= 0
+
+        // which leads to:
+
+        // data[index - 1].abs() < data[index].abs() &&
+        // data_len[index].abs() < data[index + 1].abs()
+
+        // and a maximum can be in the form:
+
+        //
+        //
+        // -------------------------------------------------------------
+        //                          .
+        //                        .. ..
+        //                       .     .
+        //                      .       .
+        
+        // data[index - 1] < data[index] && data[index] > data[index + 1]
+        // with data[index - 1], data[index], data[index + 1] <= 0
+
+        // which leads to:
+
+        // data[index - 1].abs() > data[index].abs() &&
+        // data_len[index].abs() > data[index + 1].abs()
+
+        
         // If a minimum or a maximum has been found ...
         if (data[index].abs() > data[index - 1].abs())
             && (data[index].abs() >= data[index + 1].abs())
@@ -116,7 +157,7 @@ pub fn spike_detection(
                 // check if the signal is still decreasing and look for the interval in
                 // [index + interval, index + interval + OVERLAP] if this value does not
                 // overcome the data_length
-                if peak_end_sample == index + interval && index + interval + OVERLAP < data_length {
+                if peak_end_sample == index + interval - 1 && index + interval + OVERLAP < data_length {
                     in_interval_index = peak_end_sample + 1;
                     while in_interval_index < index + interval + OVERLAP {
                         if data[in_interval_index] < peak_end_value {
@@ -128,6 +169,7 @@ pub fn spike_detection(
                 }
             }
             // end minimum branch
+
             else {
                 // else look for a maximum
                 peak_end_sample = index + 1;
@@ -157,7 +199,7 @@ pub fn spike_detection(
                 // check if the signal is still increasing and look for the interval in
                 // [index + interval, index + interval + OVERLAP] if this value does not
                 // overcome the data_length
-                if peak_end_sample == index + interval && index + interval + OVERLAP < data_length {
+                if peak_end_sample == index + interval - 1 && index + interval + OVERLAP < data_length {
                     in_interval_index = peak_end_sample + 1;
                     while in_interval_index < index + interval + OVERLAP {
                         if data[in_interval_index] > peak_end_value {
@@ -240,95 +282,15 @@ pub fn spike_detection_new(
     peak_times.reserve(max_peaks);
     peak_values.reserve(max_peaks);
 
-    // Now let's scroll a window of width peak_duration though the data
-
-    let window_size = peak_duration / 2;
-
-    // USED VARIABLES
-    let mut left_boundary = 0;
-    let mut right_boundary = window_size.min(data_len);
-    let mut min = f32::MAX;
-    let mut min_index = 0;
-    let mut max = f32::MIN;
+    // Now let's scroll the data looking for minumum and maximum
     let mut max_index = 0;
-    let mut previous_min = f32::MAX;
-    let mut previous_min_index = 0;
-    let mut previous_max = f32::MIN;
-    let mut previous_max_index = 0;
-    let mut min_min;
-    let mut min_min_index;
-    let mut max_max;
-    let mut max_max_index;
+    let mut max_value = f32::MIN;
+    let mut min_index = 0;
+    let mut min_value = f32::MAX;
 
-    // the first window is outside of the loop
-    for index in left_boundary..right_boundary {
-        if data[index] < min {
-            min = data[index];
-            min_index = index;
-        }
-        if data[index] > max {
-            max = data[index];
-            max_index = index;
-        }
-    }
+    let mut index = 1;
+    while index < data.len() {
 
-    left_boundary += window_size;
-    right_boundary += window_size;
-
-    while left_boundary <= data_len {
-        // look for min and max inside the window and store their values and
-        // indices
-        for index in left_boundary..right_boundary {
-            if data[index] < min {
-                min = data[index];
-                min_index = index;
-            }
-            if data[index] > max {
-                max = data[index];
-                max_index = index;
-            }
-        }
-
-        if min < previous_min {
-            min_min = min;
-            min_min_index = min_index;
-        } else {
-            min_min = previous_min;
-            min_min_index = previous_min_index;
-        }
-
-        if max < previous_max {
-            max_max = max;
-            max_max_index = max_index;
-        } else {
-            max_max = previous_max;
-            max_max_index = previous_max_index;
-        }
-
-        previous_min = min;
-        previous_min_index = min_index;
-        previous_max = max;
-        previous_max_index = max_index;
-
-        // check if the difference between min and max overcome the threshold
-        // and adjust the next boundaries accordingly to the found peak
-
-        if (min_min - max_max).abs() > threshold {
-            if min_min_index < max_max_index {
-                peak_times.push(min_min_index);
-                left_boundary = max_max_index + peak_distance;
-                right_boundary = (left_boundary + window_size).min(data_len);
-            } else {
-                peak_times.push(max_max_index);
-                left_boundary = min_min_index + peak_distance;
-                right_boundary = (left_boundary + window_size).min(data_len);
-            }
-            peak_values.push((min_min - max_max).abs());
-        } else {
-            left_boundary += window_size;
-            right_boundary += window_size;
-        }
-        println!("{left_boundary}, {right_boundary}, {window_size}");
     }
 
     Ok((peak_times, peak_values))

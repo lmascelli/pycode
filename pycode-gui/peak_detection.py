@@ -1,11 +1,8 @@
 from typing import Any, Dict
 from forms.peak_detection_tab import Ui_PeakDetection
 from memory import Memory
-from pycode.operations import (
-    compute_threshold,
-    clear_peaks_over_threshold,
-    spike_detection,
-)
+from pycode.operations.spike_detection import compute_threshold, spike_detection
+from pycode.operations.cleaning import clear_peaks_over_threshold
 
 from PySide6 import QtCore as qtc
 from PySide6 import QtWidgets as qtw

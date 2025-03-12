@@ -6,7 +6,7 @@ from matplotlib.patches import Rectangle
 import numpy as np
 
 from pycode import PyChannel
-from pycode.operations import get_digital_intervals
+from pycode.operations.digital import get_digital_intervals
 from canvas import MplCanvas
 from memory import Memory
 
