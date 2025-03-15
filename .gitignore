@@ -15,6 +15,7 @@ test.py
 test.csv
 /install/
 /.ropeproject/
+/.ruff_cache/
 /.mypy_cache/
 tags
 TAGS

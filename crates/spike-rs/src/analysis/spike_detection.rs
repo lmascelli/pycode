@@ -50,7 +50,7 @@ pub fn spike_detection(
     let mut ret_values = Vec::new();
     let mut ret_times = Vec::new();
 
-    const OVERLAP: usize = 5;
+    const OVERLAP: usize = 10;
     let data_length = data.len();
 
     let peak_duration: usize = (peak_duration * sampling_frequency) as usize;
@@ -153,7 +153,7 @@ pub fn spike_detection(
                     in_interval_index += 1;
                 } // end looking for actual maximum
 
-                // if the minimum has been found at the boundary of the interval
+                // if the minimum has been found at right the boundary of the interval
                 // check if the signal is still decreasing and look for the interval in
                 // [index + interval, index + interval + OVERLAP] if this value does not
                 // overcome the data_length
@@ -195,7 +195,7 @@ pub fn spike_detection(
                     in_interval_index += 1;
                 } // end looking for actual minimum
 
-                // if the maximum has been found at the boundary of the interval
+                // if the maximum has been found at the right boundary of the interval
                 // check if the signal is still increasing and look for the interval in
                 // [index + interval, index + interval + OVERLAP] if this value does not
                 // overcome the data_length

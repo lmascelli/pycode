@@ -141,7 +141,7 @@ def channel_psth(
     channel: PyChannel,
     bin_time_duration: float,
     psth_duration: float,
-    digital_intervals: List[Tuple[int, int]]
+    digital_intervals: List[Tuple[int, int]],
 ) -> np.ndarray:
     """
     Compute the PSTH of a channel and returns a list with the count of the
@@ -163,7 +163,6 @@ def channel_psth(
 
     n_bins = int(psth_duration / bin_time_duration)  # number of bin after the stimulus
 
-
     global res
     res = np.zeros(n_bins)  # variable to accumulate the psth
 
@@ -180,7 +179,7 @@ def channel_psth(
             ),
         )
 
-    return res # TODO: average by n_bins     --> Code here: / n_bins
+    return res  # TODO: average by n_bins     --> Code here: / n_bins
 
 
 def psth(
