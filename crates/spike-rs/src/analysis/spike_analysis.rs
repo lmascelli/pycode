@@ -128,6 +128,9 @@ pub fn count_peaks_in_intervals(peak_times: &[usize], intervals: &[(usize, usize
             interval_index += 1;
         }
     }
+    if peak_index >= peaks_len {
+        ret[interval_index] = peak_count;
+    }
     ret
 }
 

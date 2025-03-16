@@ -37,18 +37,24 @@ if __name__ == "__main__":
     #                   PARAMETERS                   #
     ##################################################
 
+    WITH_PEAK_DETECTION = False
     STIMULUS_DURATION = 500e-3  # seconds
     OFF_DURATION = 4  # seconds
 
     EXPERIMENT_FOLDER = Path(
         "/home/leonardo/Documents/unige/data/Cardio/11-02-2025/41599"
     )
-    EXCLUDED_CHANNELS = [
+
+    THRESHOLD_PROBE_INTERVAL = 5  # seconds
+    MINIMUM_THRESHOLD = 1e-6  # Volt
+    MAXIMUM_THRESHOLD = 3e-3  # Volt
+    MINIMUM_MFR = 0.5  # Peak/Seconds
+    MAXIMUM_MFR = 10  # Peak/Seconds
+
+    excluded_channels = [
         "15",
         "31",
     ]
-
-    THRESHOLD_PROBE_INTERVAL = 5  # seconds
 
     ##################################################
     #              DATA INITIALIZATION               #
@@ -72,6 +78,7 @@ if __name__ == "__main__":
 
     result = {
         "time (s)": [],
+        "end_time (s)": [],
         "phase_types": [],
     }
 
@@ -81,42 +88,124 @@ if __name__ == "__main__":
     #                  DATA ITERATION                #
     ##################################################
 
-    for phase in experiment.phases:
+    # PRELIMINARY DATA ANALYSIS FOR:
+    # - THRESHOLD PROBING
+    # - PEAK DETECTION (IF NOT DISABLED)
+    # - EXCLUDING CHANNELS WITH BAD MFR
+    for i, phase in enumerate(experiment.phases):
+        print(f"Phase: {i + 1}/{len(experiment.phases)}")
         handler = phase.handler
-        channels = pc.utils.create_excluded_list(EXCLUDED_CHANNELS, handler.channels())
-        sampling_frequency = phase.handler.sampling_frequency()
+        channels = pc.utils.create_excluded_list(excluded_channels, handler.channels())
+        sampling_frequency = handler.sampling_frequency()
+        datalen = handler.datalen()
 
-        # PROBING THE THRESHOLD VALUES
-        threshold_probe_interval_in_samples = (
-            THRESHOLD_PROBE_INTERVAL * sampling_frequency
-        )
-        thresholds = {}
+        if WITH_PEAK_DETECTION:
+            for c_n, channel in enumerate(channels):
+                print(f"Channel: {c_n + 1}/{len(channels)}")
+                data = handler.raw_data(channel)
+                # PROBING THE THRESHOLD VALUES
+                thresholds_data = pc.operations.spike_detection.probe_threshold(
+                    data,
+                    sampling_frequency,
+                    9,
+                    THRESHOLD_PROBE_INTERVAL,
+                )
+                for start, end, threshold in thresholds_data:
+                    if threshold < MINIMUM_THRESHOLD or threshold > MAXIMUM_THRESHOLD:
+                        print(
+                            f"Invalid threshold {threshold} found in interval ({start}, {end})"
+                        )
+
+                # PEAK DETECTION
+                peak_times, peak_values = (
+                    pc.operations.spike_detection.spike_detection_moving_threshold(
+                        data,
+                        sampling_frequency,
+                        9,
+                        50e-3,
+                        50e-3,
+                        THRESHOLD_PROBE_INTERVAL,
+                    )
+                )
+                if phase.phase_type is PhaseType.STIM:
+                    digital = handler.digital(0)
+                    digital_intervals = pc.operations.digital.get_digital_intervals(
+                        digital
+                    )
+                    digital_points = []
+                    for interval in digital_intervals:
+                        digital_points.append(interval[0])
+                        digital_points.append(interval[1])
+                    peak_times, peak_values = (
+                        pc.operations.cleaning.clear_peaks_around_points(
+                            peak_times,
+                            peak_values,
+                            digital_points,
+                            10,  # 10 samples is 1 ms
+                        )
+                    )
+                    peak_times, peak_values = (
+                        pc.operations.cleaning.clear_peaks_over_threshold(
+                            peak_times,
+                            peak_values,
+                            MAXIMUM_THRESHOLD,
+                        )
+                    )
+                    handler.set_peak_train(channel, (peak_times, peak_values))
+                else:
+                    handler.set_peak_train(channel, (peak_times, peak_values))
+
+        # LOOK FOR CHANNELS TO EXCLUDE
+        phase_duration = (
+            handler.datalen() / sampling_frequency
+        )  # find the duration in seconds
+        for channel in channels:
+            mfr = len(handler.peak_train(channel)[0]) / phase_duration
+            if mfr < MINIMUM_MFR or mfr > MAXIMUM_MFR:
+                print(f"Removed {channel.label()} because it has a MFR of {mfr}")
+                excluded_channels.append(channel.label())
+
+    for i, phase in enumerate(experiment.phases):
+        print(f"Phase: {i + 1}/{len(experiment.phases)}")
+        handler = phase.handler
+        sampling_frequency = handler.sampling_frequency()
+        channels = pc.utils.create_excluded_list(excluded_channels, handler.channels())
+        datalen = handler.datalen()
 
         # Here i create the keys in the result return dict for each channel
         for channel in channels:
             if channel.label() not in result.keys():
                 result[channel.label()] = []
+
         match phase.phase_type:
             case PhaseType.BASAL:
                 # During the basal phases the signal should be sub sampled by interval with
                 # duration of NUMBER_OF_INTERVALS * STIMULUS_DURATION
 
-                sampling_frequency = handler.sampling_frequency()
                 phase_duration = (
-                    handler.datalen() / sampling_frequency
+                    datalen / sampling_frequency
                 )  # find the duration in seconds
-                sample_duration = STIMULUS_DURATION * number_of_intervals
-                n_intervals = int(phase_duration / (sample_duration))
 
-                sample_duration_in_samples = sample_duration * sampling_frequency
+                interval_duration = STIMULUS_DURATION * number_of_intervals
+                n_intervals = int(phase_duration / interval_duration)
+
+                interval_duration_in_samples = interval_duration * sampling_frequency
 
                 this_phase_intervals = []
 
+                # here i create an array with the intervals in which compute the MFR
+                # of the current phase
                 for i in range(n_intervals):
-                    start_time = int(i * sample_duration_in_samples)
-                    end_time = int((i + 1) * sample_duration_in_samples)
+                    start_time = int(i * interval_duration_in_samples)
+                    end_time = int((i + 1) * interval_duration_in_samples)
+                    if start_time >= datalen or end_time > datalen:
+                        print(f"Phase {i} cannot go out of {start_time} or {end_time}")
+                        break
                     result["time (s)"].append(
                         start_time / sampling_frequency + elapsed_time
+                    )
+                    result["end_time (s)"].append(
+                        end_time / sampling_frequency + elapsed_time
                     )
                     result["phase_types"].append(PhaseType.from_int(phase.phase_type))
                     this_phase_intervals.append((start_time, end_time))
@@ -129,7 +218,7 @@ if __name__ == "__main__":
                     )
                     for peak in peak_counts:
                         result[channel.label()].append(
-                            peak / (STIMULUS_DURATION * n_intervals)
+                            peak / (STIMULUS_DURATION * number_of_intervals)
                         )
 
             case PhaseType.STIM:
@@ -170,7 +259,7 @@ if __name__ == "__main__":
                     ).tolist()
                     for value in psth:
                         result[channel.label()].append(
-                            value / (STIMULUS_DURATION * n_intervals)
+                            value / (STIMULUS_DURATION * len(digital_intervals))
                         )
 
             case PhaseType.UNKNOWN:
