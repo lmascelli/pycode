@@ -242,7 +242,7 @@ pub fn spike_detection(
     Ok((ret_times, ret_values))
 }
 
-pub fn spike_detection_new(
+pub fn spike_detection_new_core(
     data: &[f32],
     threshold: f32,
     peak_duration: usize,
@@ -294,6 +294,17 @@ pub fn spike_detection_new(
     }
 
     Ok((peak_times, peak_values))
+}
+
+pub fn spike_detection_new(
+    data: &[f32],
+    threshold: f32,
+    peak_duration: usize,
+    peak_distance: usize,
+    n_treads: Option<usize>,
+) -> Result<(Vec<usize>, Vec<f32>), SpikeError> {
+    
+    Ok()
 }
 
 pub fn compute_peak_train<Channel: ChannelTrait>(
