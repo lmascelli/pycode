@@ -73,12 +73,13 @@ fn spike_detection_new(
     threshold: f32,
     peak_duration: usize,
     peak_distance: usize,
-) -> Option<(Vec<usize>, Vec<f32>)> {
+) -> Option<(Vec<usize>, Vec<usize>, Vec<f32>, Vec<f32>)> {
     match spike_rs::analysis::spike_detection::spike_detection_new(
         data[..].as_ref(),
         threshold,
         peak_duration,
         peak_distance,
+        None,
     ) {
         Ok(ret) => Some(ret),
         Err(err) => {

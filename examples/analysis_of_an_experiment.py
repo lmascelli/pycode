@@ -7,7 +7,7 @@ from pprint import pp
 import csv
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ##################################################
     #                   PARAMETERS                   #
     ##################################################
@@ -16,26 +16,22 @@ if __name__ == '__main__':
     WITH_PEAK_DETECTION = False
     GENERATE_PLOT = True
 
-    STIMULUS_DURATION = 500e-3  # seconds
+    STIMULUS_DURATION = 2500e-3  # seconds
     OFF_DURATION = 4  # seconds
 
     EXPERIMENT_FOLDER = Path(
-        "/home/leonardo/Documents/unige/data/Cardio/11-02-2025/41599"
-#        "/home/leonardo/Documents/unige/data/Cardio/11-02-2025/44469"        
+        "/home/leonardo/Documents/unige/data/12-04-2024/39480_DIV77/raw/"
     )
-    SAVENAME = "/home/leonardo/Documents/unige/data/Cardio/11-02-2025/41599.csv"
-#    SAVENAME = "/home/leonardo/Documents/unige/data/Cardio/11-02-2025/44469.csv"    
-
+    SAVENAME = "/home/leonardo/Documents/unige/data/12-04-2024/39480_DIV77/39480.csv"
 
     THRESHOLD_PROBE_INTERVAL = 5  # seconds
-    MINIMUM_THRESHOLD = 1e-6  # Volt
-    MAXIMUM_THRESHOLD = 3e-3  # Volt
+    MINIMUM_THRESHOLD = 20e-6  # Volt
+    MAXIMUM_THRESHOLD = 350e-6  # Volt
     MINIMUM_MFR = 0.1  # Peak/Seconds
-    MAXIMUM_MFR = 10  # Peak/Seconds
+    MAXIMUM_MFR = 40  # Peak/Seconds
 
     excluded_channels = [
-        "15",
-        "31",
+        "E-00155 15",
     ]
 
 
@@ -66,7 +62,6 @@ def result_to_csv(result_dict, file_name):
 
 
 if __name__ == "__main__":
-
     ##################################################
     #              DATA INITIALIZATION               #
     ##################################################
@@ -99,10 +94,11 @@ if __name__ == "__main__":
     #                  DATA ITERATION                #
     ##################################################
     for i, phase in enumerate(experiment.phases):
-        print(f"Phase: {i + 1}/{len(experiment.phases)}")
+        print(f"Phase: {i + 1}/{len(experiment.phases)}  PEAK DETECTION")
         handler = phase.handler
         channels = pc.utils.create_excluded_list(excluded_channels, handler.channels())
         sampling_frequency = handler.sampling_frequency()
+
         if WITH_PEAK_DETECTION:
             for c_n, channel in enumerate(channels):
                 print(f"Channel: {c_n + 1}/{len(channels)}")
@@ -170,7 +166,6 @@ if __name__ == "__main__":
         sampling_frequency = handler.sampling_frequency()
         datalen = handler.datalen()
 
-
         # LOOK FOR CHANNELS TO EXCLUDE
         phase_duration = (
             handler.datalen() / sampling_frequency
@@ -189,9 +184,9 @@ if __name__ == "__main__":
         datalen = handler.datalen()
 
         # Here i create the keys in the result return dict for each channel
-        for channel in channels:
-            if channel.label() not in result.keys():
-                result[channel.label()] = []
+        for channel in handler.channels():
+            print(channel.label())
+            result[channel.label()] = []
 
         match phase.phase_type:
             case PhaseType.BASAL:
@@ -286,7 +281,7 @@ if __name__ == "__main__":
                 print(f"Unknown type of phase: {phase.filepath}")
 
     if GENERATE_PLOT:
-        types = result['phase_types']
+        types = result["phase_types"]
 
         global current_value, current_type, current_plot, current_times
         current_plot = []
@@ -296,43 +291,50 @@ if __name__ == "__main__":
         current_time = 0
 
         for key in result.keys():
-            if 'time' not in key and 'phase_types' not in key:
+            if "time" not in key and "phase_types" not in key:
                 channel_count += 1
-                
+
         for i, t in enumerate(types):
             current_value = 0
-            
+
             if t is not current_type:
                 if current_type == "Basal":
-                    times = [t for t in range(current_time, current_time + len(current_plot))]
+                    times = [
+                        t for t in range(current_time, current_time + len(current_plot))
+                    ]
                     plt.bar(times, current_plot, color="blue")
                 if current_type == "Stimulation":
                     plt.bar(current_time, current_plot[0], color="red")
-                    times = [t for t in range(current_time + 1, current_time + len(current_plot))]
+                    times = [
+                        t
+                        for t in range(
+                            current_time + 1, current_time + len(current_plot)
+                        )
+                    ]
                     plt.bar(times, current_plot[1:], color="green")
                 current_time += len(current_plot)
                 current_plot = []
 
             current_type = types[i]
-            
+
             for key in result.keys():
-                if 'time' not in key and 'phase_types' not in key:
+                if "time" not in key and "phase_types" not in key:
                     current_value += result[key][i]
-            current_plot.append(current_value/channel_count)
+            current_plot.append(current_value / channel_count)
 
         if current_type == "Basal":
             times = [t for t in range(current_time, current_time + len(current_plot))]
             plt.bar(times, current_plot, color="blue")
         if current_type == "Stimulation":
             plt.bar(current_time, current_plot[0], color="red")
-            times = [t for t in range(current_time + 1, current_time + len(current_plot))]
+            times = [
+                t for t in range(current_time + 1, current_time + len(current_plot))
+            ]
             plt.bar(times, current_plot[1:], color="green")
-
 
         plt.ylabel("MFR (Hz)")
         # plt.xlabel("Time (s)")
         plt.show()
-            
-        
+
     if SAVE_CSV:
         result_to_csv(result, f"{SAVENAME}")

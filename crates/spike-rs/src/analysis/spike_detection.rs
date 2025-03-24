@@ -79,7 +79,7 @@ pub fn spike_detection(
         //                     .    .
         //                      . .
         //                       .
-        // 
+        //
         // -------------------------------------------------------------
         //
         //
@@ -101,7 +101,7 @@ pub fn spike_detection(
         //                        .. ..
         //                       .     .
         //                      .       .
-        
+
         // data[index - 1] < data[index] && data[index] > data[index + 1]
         // with data[index - 1], data[index], data[index + 1] <= 0
 
@@ -110,7 +110,6 @@ pub fn spike_detection(
         // data[index - 1].abs() > data[index].abs() &&
         // data_len[index].abs() > data[index + 1].abs()
 
-        
         // If a minimum or a maximum has been found ...
         if (data[index].abs() > data[index - 1].abs())
             && (data[index].abs() >= data[index + 1].abs())
@@ -157,7 +156,9 @@ pub fn spike_detection(
                 // check if the signal is still decreasing and look for the interval in
                 // [index + interval, index + interval + OVERLAP] if this value does not
                 // overcome the data_length
-                if peak_end_sample == index + interval - 1 && index + interval + OVERLAP < data_length {
+                if peak_end_sample == index + interval - 1
+                    && index + interval + OVERLAP < data_length
+                {
                     in_interval_index = peak_end_sample + 1;
                     while in_interval_index < index + interval + OVERLAP {
                         if data[in_interval_index] < peak_end_value {
@@ -169,7 +170,6 @@ pub fn spike_detection(
                 }
             }
             // end minimum branch
-
             else {
                 // else look for a maximum
                 peak_end_sample = index + 1;
@@ -199,7 +199,9 @@ pub fn spike_detection(
                 // check if the signal is still increasing and look for the interval in
                 // [index + interval, index + interval + OVERLAP] if this value does not
                 // overcome the data_length
-                if peak_end_sample == index + interval - 1 && index + interval + OVERLAP < data_length {
+                if peak_end_sample == index + interval - 1
+                    && index + interval + OVERLAP < data_length
+                {
                     in_interval_index = peak_end_sample + 1;
                     while in_interval_index < index + interval + OVERLAP {
                         if data[in_interval_index] > peak_end_value {
@@ -247,7 +249,7 @@ pub fn spike_detection_new_core(
     threshold: f32,
     peak_duration: usize,
     peak_distance: usize,
-) -> Result<(Vec<usize>, Vec<f32>), SpikeError> {
+) -> Result<(Vec<usize>, Vec<usize>, Vec<f32>, Vec<f32>), SpikeError> {
     let data_len = data.len();
 
     if data_len < 2 {
@@ -274,26 +276,170 @@ pub fn spike_detection_new_core(
     //                           DATA LENGTH
     //
 
-    let mut peak_times = vec![];
-    let mut peak_values = vec![];
+    let max_peaks = data.len() / (peak_duration + peak_distance + 2);
+    let window_size = peak_duration / 2;
 
-    let max_peaks = data.len() / (peak_distance + 2);
+    let mut max_peak_indices = vec![];
+    let mut min_peak_indices = vec![];
+    let mut max_peak_values = vec![];
+    let mut min_peak_values = vec![];
 
-    peak_times.reserve(max_peaks);
-    peak_values.reserve(max_peaks);
+    min_peak_indices.reserve(max_peaks);
+    max_peak_indices.reserve(max_peaks);
+    max_peak_values.reserve(max_peaks);
+    min_peak_values.reserve(max_peaks);
 
-    // Now let's scroll the data looking for minumum and maximum
-    let mut max_index = 0;
-    let mut max_value = f32::MIN;
-    let mut min_index = 0;
-    let mut min_value = f32::MAX;
+    let mut a_min_value = f32::MAX;
+    let mut a_min_index = 0;
+    let mut a_max_value = f32::MIN;
+    let mut a_max_index = 0;
+    let mut b_min_value = f32::MAX;
+    let mut b_min_index = 0;
+    let mut b_max_value = f32::MIN;
+    let mut b_max_index = 0;
+    let mut index = 0;
+    let mut a_check_lim = window_size;
+    let mut window_scrolled = 0;
 
-    let mut index = 1;
-    while index < data.len() {
+    // Now let's scroll the data looking for minumum and maximum. The
+    // general idea is to find minimum and maximum in a window that
+    // last for half of the `peak_duration` time. This way we should
+    // directly obtain the absolute maximum and minimum during the
+    // life of peak and scroll the data array just one time. By
+    // comparing the mimuma and maxima found in two consecutive
+    // windows we should be able to found all peaks without overlaps.
 
+    // fill the a window min and max;
+    while index < a_check_lim && index < data.len() {
+        if data[index] < a_min_value {
+            a_min_value = data[index];
+            a_min_index = index;
+        }
+        if data[index] > a_max_value {
+            a_max_value = data[index];
+            a_max_index = index;
+        }
+        index += 1;
     }
 
-    Ok((peak_times, peak_values))
+    // if there is no place for other checks just check the a_min and a_max
+    // for a threshold otherwise go on.
+    if index == data.len() {
+        if a_max_value - a_min_value >= threshold {
+            println!("Inserted peak in A");
+            max_peak_indices.push(a_max_index);
+            max_peak_values.push(a_max_value);
+            min_peak_indices.push(a_min_index);
+            min_peak_values.push(a_min_value);
+        }
+    } else {
+        while index < data.len() {
+            if data[index] < b_min_value {
+                b_min_value = data[index];
+                b_min_index = index;
+            }
+            if data[index] > b_max_value {
+                b_max_value = data[index];
+                b_max_index = index;
+            }
+            window_scrolled += 1;
+            if window_scrolled == window_size {
+                // reset the window scroll. We will move to a new
+                // window where to search for minimum and maximum.
+                window_scrolled = 0;
+
+                let test_max_value;
+                let test_max_index;
+                let test_min_value;
+                let test_min_index;
+
+                // look for the actual min and the actual max
+                if a_max_value > b_max_value {
+                    test_max_value = a_max_value;
+                    test_max_index = a_max_index;
+                } else {
+                    test_max_value = b_max_value;
+                    test_max_index = b_max_index;
+                }
+
+                if a_min_value < b_min_value {
+                    test_min_value = a_min_value;
+                    test_min_index = a_min_index;
+                } else {
+                    test_min_value = b_min_value;
+                    test_min_index = b_min_index;
+                }
+
+                // check for threshold
+                if test_max_value - test_min_value >= threshold {
+                    max_peak_indices.push(test_max_index);
+                    max_peak_values.push(test_max_value);
+                    min_peak_indices.push(test_min_index);
+                    min_peak_values.push(test_min_value);
+
+                    index = if test_max_index < test_min_index {
+                        test_max_index
+                    } else {
+                        test_min_index
+                    } + peak_distance;
+
+                    // fill A values again and check if we are not at
+                    // the end of the array
+                    a_min_value = f32::MAX;
+                    a_max_value = f32::MIN;
+                    a_check_lim = index + window_size;
+                    while index < a_check_lim && index < data.len() {
+                        if data[index] < a_min_value {
+                            a_min_value = data[index];
+                            a_min_index = index;
+                        }
+                        if data[index] > a_max_value {
+                            a_max_value = data[index];
+                            a_max_index = index;
+                        }
+                        index += 1;
+                    }
+
+                    // if there is no place for other checks just check the a_min and a_max
+                    // for a threshold otherwise go on.
+                    if index == data.len() {
+                        if a_max_value - a_min_value >= threshold {
+                            println!("Inserted peak in C");
+                            max_peak_indices.push(a_max_index);
+                            max_peak_values.push(a_max_value);
+                            min_peak_indices.push(a_min_index);
+                            min_peak_values.push(a_min_value);
+                        }
+                    }
+                    b_min_value = f32::MAX;
+                    b_max_value = f32::MIN;
+
+                    // the correct index has been update so continue
+                    // to the next loop to avoid increasing it
+                    // unnecessary.
+                    // continue;
+                } else {
+                    // we are going to move to the next window, the A
+                    // values have already been checked and need the B
+                    // values have to be the new A values.
+                    a_min_value = b_min_value;
+                    a_min_index = b_min_index;
+                    a_max_value = b_max_value;
+                    a_max_index = b_max_index;
+                    b_min_value = f32::MAX;
+                    b_max_value = f32::MIN;
+                }
+            }
+            index += 1;
+        }
+    }
+
+    Ok((
+        max_peak_indices,
+        min_peak_indices,
+        max_peak_values,
+        min_peak_values,
+    ))
 }
 
 pub fn spike_detection_new(
@@ -301,10 +447,16 @@ pub fn spike_detection_new(
     threshold: f32,
     peak_duration: usize,
     peak_distance: usize,
-    n_treads: Option<usize>,
-) -> Result<(Vec<usize>, Vec<f32>), SpikeError> {
-    
-    Ok()
+    n_threads: Option<usize>,
+) -> Result<(Vec<usize>, Vec<usize>, Vec<f32>, Vec<f32>), SpikeError> {
+    match n_threads {
+        Some(n_threads) => {
+            todo!()
+        },
+        None => {
+            spike_detection_new_core(data, threshold, peak_duration, peak_distance)
+        }
+    }
 }
 
 pub fn compute_peak_train<Channel: ChannelTrait>(
