@@ -70,7 +70,7 @@ class Experiment:
                 self.phases.append(
                     Phase(
                         root_folder.joinpath(phase_file),
-                        lambda p: converting_rule(p, "41599", "Cardio", "5"),
+                        lambda p: converting_rule(p, "41599", "Neuron", "5"),
                     )
                 )
 

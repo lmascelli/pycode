@@ -16,7 +16,7 @@ if __name__ == "__main__":
     WITH_PEAK_DETECTION = False
     GENERATE_PLOT = True
 
-    STIMULUS_DURATION = 2500e-3  # seconds
+    STIMULUS_DURATION = 250e-3  # seconds
     OFF_DURATION = 4  # seconds
 
     EXPERIMENT_FOLDER = Path(
@@ -157,7 +157,6 @@ if __name__ == "__main__":
 
     # PRELIMINARY DATA ANALYSIS FOR:
     # - THRESHOLD PROBING
-    # - PEAK DETECTION (IF NOT DISABLED)
     # - EXCLUDING CHANNELS WITH BAD MFR
     for i, phase in enumerate(experiment.phases):
         print(f"Phase: {i + 1}/{len(experiment.phases)}")
@@ -184,7 +183,7 @@ if __name__ == "__main__":
         datalen = handler.datalen()
 
         # Here i create the keys in the result return dict for each channel
-        for channel in handler.channels():
+        for channel in channels:
             print(channel.label())
             result[channel.label()] = []
 
@@ -317,8 +316,15 @@ if __name__ == "__main__":
 
             current_type = types[i]
 
+            pp(f"---------------------------------------------------")
+            pp(result.keys())
+            for key in result.keys():
+                print(len(result[key]))
+            pp(f"---------------------------------------------------")
+
             for key in result.keys():
                 if "time" not in key and "phase_types" not in key:
+                    print(f"KEY CHECK {key}")
                     current_value += result[key][i]
             current_plot.append(current_value / channel_count)
 

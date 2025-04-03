@@ -13,7 +13,7 @@ def compute_threshold(
     data: List[float],
     sampling_frequency: float,
     multiplier: float,
-    min_threshold: float = 0.00001,
+    min_threshold: float = 1e-6,
 ) -> Optional[float]:
     return py_compute_threshold(data, sampling_frequency, multiplier, min_threshold)
 
@@ -23,6 +23,7 @@ def probe_threshold(
     sampling_frequency: float,
     multiplier: float,
     interval_duration: float = 5,
+    min_threshold: float = 1e-6,
 ) -> List[Tuple[int, int, float]]:
     """Compute the threshold of the channel every INTERVAL_DURATION seconds and
     return an array of the interval in which the threshold is valid and the
@@ -39,6 +40,7 @@ def probe_threshold(
                     data[int(i * probing_interval) : int((i + 1) * probing_interval)],
                     sampling_frequency,
                     multiplier,
+                    min_threshold,
                 ),
             )
         )
@@ -162,23 +164,19 @@ def mega_spike_detection(
     ##################################################
 
     if probe_threshold_time is not None:
-        peak_times, peak_values = (
-            spike_detection_moving_threshold(
-                actual_data,
-                sampling_frequency,
-                n_devs,
-                peak_duration,
-                refractory_time,
-                probe_threshold_time,
-                min_threshold,
-                max_threshold,
-            )
+        peak_times, peak_values = spike_detection_moving_threshold(
+            actual_data,
+            sampling_frequency,
+            n_devs,
+            peak_duration,
+            refractory_time,
+            probe_threshold_time,
+            min_threshold,
+            max_threshold,
         )
 
     else:
-        threshold = compute_threshold(
-            actual_data, sampling_frequency, n_devs
-        )
+        threshold = compute_threshold(actual_data, sampling_frequency, n_devs)
 
         peak_times, peak_values = spike_detection(
             actual_data,

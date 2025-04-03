@@ -416,9 +416,11 @@ impl PhaseTrait<Channel> for Phase {
         let label_c = CString::new(channel.label.clone())
             .expect("peak_train_len: Failed to convert the CStr");
         let peak_train_len = self.peak_train_len(channel);
+
         if peak_train_len == 0 {
             return Ok((vec![], vec![]));
         }
+
         let mut peak_train = PeakTrain::new(peak_train_len);
         let mut peak_train_c = peak_train.as_c_repr();
         let res = unsafe {

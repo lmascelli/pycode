@@ -1,6 +1,9 @@
 from typing import List, Tuple
 
-from ..pycode import find_peaks_around_points as py_find_peaks_around_points
+from ..pycode import (
+    find_peaks_around_points as py_find_peaks_around_points,
+    high_pass_filter as py_high_pass_filter,
+)
 
 
 def find_peaks_around_points(
@@ -59,3 +62,11 @@ def clear_peaks_over_threshold(
             new_peak_times.append(peak_times[i])
             new_peak_values.append(value)
     return (new_peak_times, new_peak_values)
+
+
+def high_pass_filter(
+    data: List[float],
+    sampling_frequency: float,
+    cutoff: float,
+) -> List[float]:
+    return py_high_pass_filter(data, sampling_frequency, cutoff)

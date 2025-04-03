@@ -1,7 +1,7 @@
 [workspace]
 members = [
         "crates/spike-rs",
-        "crates/pycode-hdf5/", "crates/pycode-hdf5",
+        "crates/pycode-hdf5/",
 ]
 
 [package]

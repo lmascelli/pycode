@@ -377,7 +377,7 @@ pub fn spike_detection_new_core(
                     min_peak_indices.push(test_min_index);
                     min_peak_values.push(test_min_value);
 
-                    index = if test_max_index < test_min_index {
+                    index = if test_max_index > test_min_index {
                         test_max_index
                     } else {
                         test_min_index
@@ -450,12 +450,10 @@ pub fn spike_detection_new(
     n_threads: Option<usize>,
 ) -> Result<(Vec<usize>, Vec<usize>, Vec<f32>, Vec<f32>), SpikeError> {
     match n_threads {
-        Some(n_threads) => {
+        Some(_n_threads) => {
             todo!()
-        },
-        None => {
-            spike_detection_new_core(data, threshold, peak_duration, peak_distance)
         }
+        None => spike_detection_new_core(data, threshold, peak_duration, peak_distance),
     }
 }
 
