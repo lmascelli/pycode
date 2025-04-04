@@ -221,7 +221,7 @@ herr_t count_events_callback(hid_t group, const char *name,
 
 typedef struct CallbackEventsRets {
   int current_index;
-  hid_t *event_entities;
+  hid_t event_entities[MAX_EVENT_STREAMS];
 } CallbackEventsRets;
 
 herr_t open_events_callback(hid_t group, const char *name,
@@ -398,50 +398,49 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
   // PARSE THE EVENT STREAMS
   // ----------------------------------------------------------------------
 
-  /* res = H5Lexists(fid, "/Data/Recording_0/EventStream", H5P_DEFAULT); */
+  res = H5Lexists(fid, "/Data/Recording_0/EventStream", H5P_DEFAULT);
+  if (res < 0) {
+    return OPEN_EVENT_STREAM_GROUP_LINK_FAIL;
+  } else if (res == 0) {
+    phase->n_events = 0;
+  } else {
+    hid_t event_stream =
+	  H5Gopen2(fid, "/Data/Recording_0/EventStream", H5P_DEFAULT);
+    if (event_stream <= 0) {
+      return OPEN_EVENT_STREAM_GROUP_FAIL;
+    }
+    res = H5Lexists(fid, "/Data/Recording_0/EventStream/Stream_0", H5P_DEFAULT);
+    if (res < 0) {
+      return OPEN_EVENT_STREAM_STREAM_0_GROUP_LINK_FAIL;
+    } else if (res == 0) {
+      phase->n_events = 0;
+    } else {
+      hid_t events_group =
+          H5Gopen2(fid, "/Data/Recording_0/EventStream/Stream_0", H5P_DEFAULT);
+      if (events_group <= 0) {
+        return OPEN_EVENT_STREAM_GROUP_FAIL;
+      }
 
-  /* if (res < 0) { */
-  /*   return OPEN_EVENT_STREAM_GROUP_LINK_FAIL; */
-  /* } else if (res == 0) { */
-  /*   phase->n_events = 0; */
-  /* } else { */
-  /*   hid_t event_stream = */
-  /*       H5Gopen2(fid, "/Data/Recording_0/EventStream", H5P_DEFAULT); */
-  /*   if (event_stream <= 0) { */
-  /*     return OPEN_EVENT_STREAM_GROUP_FAIL; */
-  /*   } */
-  /*   res = H5Lexists(fid, "/Data/Recording_0/EventStream/Stream_0", H5P_DEFAULT); */
-  /*   if (res < 0) { */
-  /*     return OPEN_EVENT_STREAM_STREAM_0_GROUP_LINK_FAIL; */
-  /*   } else if (res == 0) { */
-  /*     phase->n_events = 0; */
-  /*   } else { */
-  /*     hid_t events_group = */
-  /*         H5Gopen2(fid, "/Data/Recording_0/EventStream/Stream_0", H5P_DEFAULT); */
-  /*     if (events_group <= 0) { */
-  /*       return OPEN_EVENT_STREAM_GROUP_FAIL; */
-  /*     } */
+      res = H5Literate2(events_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL,
+                        count_events_callback, &phase->n_events);
+      if (res != OK) {
+        return res;
+      }
 
-  /*     res = H5Literate2(events_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, */
-  /*                       count_events_callback, &phase->n_events); */
-  /*     if (res != OK) { */
-  /*       return res; */
-  /*     } */
+      CallbackEventsRets events_rets;
+      events_rets.current_index = 0;
+      res = H5Literate2(events_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL,
+                        open_events_callback, &events_rets);
 
-  /*     CallbackEventsRets events_rets; */
-  /*     events_rets.current_index = 0; */
-  /*     res = H5Literate2(events_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL, */
-  /*                       open_events_callback, &events_rets); */
+	  if (res != OK) {
+        return res;
+      }
 
-  /*     if (res != OK) { */
-  /*       return res; */
-  /*     } */
-
-  /*     for (int i = 0; i < events_rets.current_index; ++i) { */
-  /*       phase->event_entities[i] = events_rets.event_entities[i]; */
-  /*     } */
-  /*   } */
-  /* } */
+      for (int i = 0; i < events_rets.current_index; ++i) {
+        phase->event_entities[i] = events_rets.event_entities[i];
+      }
+    }
+  }
 
   // ----------------------------------------------------------------------
   // PARSE THE PEAK_TRAIN GROUP
@@ -948,7 +947,6 @@ phaseh5_error set_peak_train(PhaseH5 *phase, size_t group, const char *label,
   sprintf(label_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/", group, label);
   sprintf(values_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/values", group, label);
   sprintf(samples_group_str, "/Data/Recording_0/Peak_Train/%zu-%s/samples", group, label);
-  printf("%s\n", label_group_str);
 
   // Delete old dataspaces if present (maybe close the identifiers)
   // Check if the group exists

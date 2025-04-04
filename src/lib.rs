@@ -367,6 +367,21 @@ impl PyPhase {
         }
     }
 
+    pub fn events(&self, index: usize) -> Option<Vec<i64>> {
+        match &self.phase {
+            None => None,
+            Some(phase) => {
+                match phase.events(index) {
+                    Ok(data) => Some(data),
+                    Err(err) => {
+                        println!("{err:?}");
+                        None
+                    }
+                }
+            },
+        }
+    }
+
     #[pyo3(signature = (channel, start=None, end=None))]
     pub fn peak_train(
         &self,

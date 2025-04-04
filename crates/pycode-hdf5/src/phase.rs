@@ -394,7 +394,7 @@ impl PhaseTrait<Channel> for Phase {
     fn n_events(&self) -> usize {
         self.phase.n_events as usize
     }
-
+    
     fn events(&self, index: usize) -> Result<Vec<i64>, SpikeError> {
         let len = self.events_len(index);
         let mut data = vec![0i64; len];
