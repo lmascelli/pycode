@@ -7,6 +7,9 @@ from scipy.signal import butter, filtfilt
 
 FOLDERPATH = Path("/home/leonardo/Documents/unige/data/12-04-2024/39480_DIV77/raw/")
 HIGH_PASS_FREQUENCY = 100
+NDEV = 8
+PEAK_DURATION = 2e-3
+PEAK_DISTANCE = 2e-3
 
 for filename in listdir(FOLDERPATH):
     if filename.endswith(".h5"):
@@ -25,14 +28,14 @@ for filename in listdir(FOLDERPATH):
 
             print("PEAK DETECTION")
             threshold = pc.operations.spike_detection.compute_threshold(
-                actual_data, phase.sampling_frequency(), 8, 1e-7
+                actual_data, phase.sampling_frequency(), NDEV, 1e-7
             )
             peak_times, peak_values = pc.operations.spike_detection.spike_detection(
                 actual_data,
                 phase.sampling_frequency(),
                 threshold,
-                2e-3,
-                2e-3,
+                PEAK_DURATION,
+                PEAK_DISTANCE,
             )
             print(f"Found {len(peak_times)} spikes for channel {channel.label()}")
             phase.set_peak_train(channel, (peak_times, peak_values))
