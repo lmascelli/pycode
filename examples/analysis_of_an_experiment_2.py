@@ -91,9 +91,7 @@ def do_analisys(
                 # duration of NUMBER_OF_INTERVALS * STIMULUS_DURATION
 
                 phase_duration = datalen / sampling_frequency
-                interval_duration = (
-                    stimulus_on_duration
-                ) * number_of_intervals
+                interval_duration = (stimulus_on_duration) * number_of_intervals
                 n_intervals = int(phase_duration / interval_duration)
                 interval_duration_in_samples = interval_duration * sampling_frequency
 
@@ -121,11 +119,7 @@ def do_analisys(
                         )
                         for peak in peak_counts:
                             channels_count[channel.label()].append(
-                                peak
-                                / (
-                                    (stimulus_on_duration)
-                                    * number_of_intervals
-                                )
+                                peak / ((stimulus_on_duration) * number_of_intervals)
                             )
 
             case pc.converting_rules.PhaseType.STIM:
@@ -146,9 +140,10 @@ def do_analisys(
                 # get the interval timestamps where the stimulation is active
                 digital_intervals = pc.operations.digital.get_digital_intervals(digital)
 
-                number_of_bins = int((
-                    stimulus_on_duration + stimulus_off_duration
-                ) / stimulus_on_duration)
+                number_of_bins = int(
+                    (stimulus_on_duration + stimulus_off_duration)
+                    / stimulus_on_duration
+                )
 
                 for j in range(number_of_bins):
                     start_times.append(j * stimulus_on_duration + elapsed_time)
@@ -162,31 +157,72 @@ def do_analisys(
                             channel,
                             stimulus_on_duration,
                             stimulus_on_duration + stimulus_off_duration,
-                            digital_intervals
+                            digital_intervals,
                         ).tolist()
                         for value in psth:
                             channels_count[channel.label()].append(
                                 value / (stimulus_on_duration * len(digital_intervals))
                             )
-                elapsed_time += handler.datalen()/handler.sampling_frequency()
-                
+                elapsed_time += handler.datalen() / handler.sampling_frequency()
+
+            case pc.converting_rules.PhaseType.STIM_EL:
+                n_events = handler.n_events()
+                if n_events != 2:
+                    exit(
+                        f"ERROR: the electrical stimulation phase has {n_events} events channels (grazie MultiChannel)"
+                    )
+
+                start_events = handler.events(0)
+                end_events = [event + 250e-3 for event in start_events]
+                electrical_intervals = [
+                    (start_events[i], end_events[i]) for i in range(len(start_events))
+                ]
+
+                number_of_bins = int(
+                    (stimulus_on_duration + stimulus_off_duration)
+                    / stimulus_on_duration
+                )
+
+                for j in range(number_of_bins):
+                    start_times.append(j * stimulus_on_duration + elapsed_time)
+                    end_times.append((j + 1) * stimulus_on_duration + elapsed_time)
+                    phase_types.append(phase.phase_type)
+
+                electrical_intervals = [
+                    (
+                        int(value[0] * sampling_frequency * 1e-6),
+                        0,
+                    )
+                    for value in electrical_intervals
+                ]
+
+                for channel in handler.channels():
+                    if channel.label() not in excluded_labels:
+                        psth = pc.operations.spike_analysis.channel_psth(
+                            handler,
+                            channel,
+                            stimulus_on_duration,
+                            stimulus_on_duration + stimulus_off_duration,
+                            electrical_intervals,
+                        ).tolist()
+                        for value in psth:
+                            channels_count[channel.label()].append(
+                                value
+                                / (stimulus_on_duration * len(electrical_intervals))
+                            )
+                elapsed_time += handler.datalen() / handler.sampling_frequency()
+
             case pc.converting_rules.PhaseType.UNKNOWN:
                 print(f"Unknown type of phase: {phase.filepath}")
 
     if generate_plot:
-        # print(len(start_times))
-        # print(len(end_times))
-        # print(len(phase_types))        
-        # for key in channels_count.keys():
-        #     print(len(channels_count[key]))
-        
         global current_value, current_type, current_plot, current_times
         current_plot = []
         channel_count = 0
         current_value = 0
         current_type = phase_types[0]
         current_time = 0
-        
+
         for key in channels_count.keys():
             channel_count += 1
 
@@ -208,6 +244,13 @@ def do_analisys(
                         )
                     ]
                     plt.bar(times, current_plot[1:], color="green")
+
+                if current_type == pc.converting_rules.PhaseType.STIM_EL:
+                    times = [
+                        t for t in range(current_time, current_time + len(current_plot))
+                    ]
+                    plt.bar(times, current_plot, color="yellow")
+
                 current_time += len(current_plot)
                 current_plot = []
 
@@ -220,17 +263,22 @@ def do_analisys(
         if current_type == pc.converting_rules.PhaseType.BASAL:
             times = [t for t in range(current_time, current_time + len(current_plot))]
             plt.bar(times, current_plot, color="blue")
-        if current_type == pc.converting_rules.PhaseType.STIM:            
+        if current_type == pc.converting_rules.PhaseType.STIM:
             plt.bar(current_time, current_plot[0], color="red")
             times = [
                 t for t in range(current_time + 1, current_time + len(current_plot))
             ]
             plt.bar(times, current_plot[1:], color="green")
+        if current_type == pc.converting_rules.PhaseType.STIM_EL:
+            times = [
+                t for t in range(current_time, current_time + len(current_plot))
+            ]
+            plt.bar(times, current_plot, color="yellow")
 
         plt.ylabel("MFR (Hz)")
         plt.show()
 
-        
+
 if __name__ == "__main__":
     BASEFOLDER = Path("/home/leonardo/Documents/unige/data/12-04-2024/39480_DIV77/raw/")
     do_analisys(

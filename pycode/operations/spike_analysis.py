@@ -169,14 +169,15 @@ def channel_psth(
     peak_times, _ = phase.peak_train(channel, None, None)
 
     for interval in digital_intervals:
-        res = np.add(
-            res,
-            subsample_range(
+        found_peaks = subsample_range(
                 peak_times,
                 interval[0],
                 bin_size,
                 n_bins,
-            ),
+            )
+        res = np.add(
+            res,
+            found_peaks,
         )
 
     return res  # TODO: average by n_bins     --> Code here: / n_bins

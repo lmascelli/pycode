@@ -5,6 +5,7 @@ class PhaseType:
     UNKNOWN = 0
     BASAL = 1
     STIM = 2
+    STIM_EL = 3
 
     def from_str(t: str, stim_label: str) -> int:
         match t.upper():
@@ -12,6 +13,8 @@ class PhaseType:
                 return PhaseType.BASAL
             case stim_label.upper():
                 return PhaseType.STIM
+            case "STIM_EL":
+                return PhaseType.STIM_EL
             case _:
                 return PhaseType.UNKNOWN
 
@@ -23,6 +26,8 @@ class PhaseType:
                 return "Basal"
             case PhaseType.STIM:
                 return "Stimulation"
+            case PhaseType.STIM_EL:
+                return "Electrical Stimulation"
 
 
 class ConvertingValues:
@@ -110,6 +115,8 @@ def rule_order_type_cond(
             t = PhaseType.BASAL
         case "US":
             t = PhaseType.STIM
+        case "STIMEL":
+            t = PhaseType.STIM_EL
         case _:
             t = PhaseType.UNKNOWN
     return ConvertingValues(
