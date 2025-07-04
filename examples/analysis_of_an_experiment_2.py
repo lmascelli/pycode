@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 from pathlib import Path
 import pycode as pc
 import matplotlib.pyplot as plt
@@ -14,6 +14,8 @@ def do_analisys(
     minimum_mfr: float,
     maximum_mfr: float,
     generate_plot: bool = True,
+    excluded_labels: List[str] = [],
+    plot_title = "",
 ):
     # allocating the variable to store the result during the computation
     start_times = []
@@ -44,7 +46,6 @@ def do_analisys(
     # traverse all the phases looking for channels with a mfr under or above the
     # given thresholds. those channels will be excluded in all the computations
     print("Looking for channels with not valid MFR")
-    excluded_labels = []
     for i, phase in enumerate(experiment.phases):
         print(
             f"{i + 1}/{len(experiment.phases)} Analysing MFR in phase {phase.filepath}"
@@ -68,6 +69,10 @@ def do_analisys(
         if channel.label() not in excluded_labels:
             print(channel.label(), end=" ")
             channels_count[channel.label()] = []
+    print("\nRemoved channels:")
+    for excluded in excluded_labels:
+        print(excluded, end=" ")
+            
     print("\n------------------------------")
 
     # now for each phase evaluate and add the corresponding time
@@ -216,6 +221,7 @@ def do_analisys(
                 print(f"Unknown type of phase: {phase.filepath}")
 
     if generate_plot:
+        fig = plt.figure()
         global current_value, current_type, current_plot, current_times
         current_plot = []
         channel_count = 0
@@ -276,10 +282,21 @@ def do_analisys(
             plt.bar(times, current_plot, color="yellow")
 
         plt.ylabel("MFR (Hz)")
-        plt.show()
+        plt.title(plot_title)
 
 
 if __name__ == "__main__":
+    # BASEFOLDER = Path("/home/leonardo/Documents/unige/data/12-04-2024/38940_DIV77/raw/")
+    # do_analisys(
+    #     basefolder=BASEFOLDER,
+    #     converting_rule=pc.converting_rules.rule_order_type_cond,
+    #     stimulus_on_duration=0.25,
+    #     stimulus_off_duration=4,
+    #     minimum_mfr=0.1,
+    #     maximum_mfr=100,
+    #     excluded_labels = ["E-00155 36", ],
+    #     plot_title = "38940",
+    # )
     BASEFOLDER = Path("/home/leonardo/Documents/unige/data/12-04-2024/39480_DIV77/raw/")
     do_analisys(
         basefolder=BASEFOLDER,
@@ -287,5 +304,19 @@ if __name__ == "__main__":
         stimulus_on_duration=0.25,
         stimulus_off_duration=4,
         minimum_mfr=0.1,
-        maximum_mfr=40,
+        maximum_mfr=100,
+        excluded_labels = [],
+        plot_title = "39480",        
     )
+    BASEFOLDER = Path("/home/leonardo/Documents/unige/data/12-04-2024/38936_DIV77/raw/")
+    # do_analisys(
+    #     basefolder=BASEFOLDER,
+    #     converting_rule=pc.converting_rules.rule_order_type_cond,
+    #     stimulus_on_duration=0.25,
+    #     stimulus_off_duration=4,
+    #     minimum_mfr=0.1,
+    #     maximum_mfr=100,
+    #     excluded_labels = [],
+    #     plot_title = "38936",
+    # )
+    plt.show()

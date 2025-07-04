@@ -5,7 +5,7 @@ from pathlib import Path
 from scipy.signal import butter, filtfilt
 
 
-FOLDERPATH = Path("/home/leonardo/Documents/unige/data/12-04-2024/39480_DIV77/raw/")
+FOLDERPATH = Path("/home/leonardo/Documents/unige/data/12-04-2024/38936_DIV77/raw/")
 HIGH_PASS_FREQUENCY = 100
 NDEV = 8
 PEAK_DURATION = 2e-3
