@@ -898,7 +898,7 @@ phaseh5_error peak_train(PhaseH5 *phase, size_t group, const char *label,
   if (res < 0) {
     return PEAK_TRAIN_READ_VALUES_DATASET_FAIL;
   }
-  res = H5Dread(samples_ds, H5T_NATIVE_ULONG, memory_dataspace, H5S_ALL,
+  res = H5Dread(samples_ds, H5T_NATIVE_ULLONG, memory_dataspace, H5S_ALL,
                 H5P_DEFAULT, peak_train->samples);
   if (res < 0) {
     return PEAK_TRAIN_READ_SAMPLES_DATASET_FAIL;
@@ -1018,7 +1018,7 @@ phaseh5_error set_peak_train(PhaseH5 *phase, size_t group, const char *label,
 
   // Create the new datasets
   hid_t new_samples_dataset =
-      H5Dcreate2(phase->fid, samples_group_str, H5T_NATIVE_ULONG,
+      H5Dcreate2(phase->fid, samples_group_str, H5T_NATIVE_ULLONG,
                  samples_file_dataspace, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
   if (new_samples_dataset <= 0) {
     return SET_PEAK_TRAIN_CREATE_SAMPLES_FILE_DATASET_FAIL;
@@ -1032,7 +1032,7 @@ phaseh5_error set_peak_train(PhaseH5 *phase, size_t group, const char *label,
   }
 
   // Write the new values
-  res = H5Dwrite(new_samples_dataset, H5T_NATIVE_ULONG, samples_file_dataspace,
+  res = H5Dwrite(new_samples_dataset, H5T_NATIVE_ULLONG, samples_file_dataspace,
                  samples_memory_dataspace, H5P_DEFAULT, peak_train->samples);
   if (res < 0) {
     return SET_PEAK_TRAIN_WRITE_SAMPLES_DATASET_FAIL;
