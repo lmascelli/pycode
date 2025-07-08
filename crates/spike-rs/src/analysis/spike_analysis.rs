@@ -639,7 +639,7 @@ pub mod logisi {
                 &mut burst_data_2,
             )?;
 
-            add_burst(&mut burst_data, &burst_data_2)?;
+            // add_burst(&mut burst_data, &burst_data_2)?;
         } else {
             find_burst(
                 peak_train,

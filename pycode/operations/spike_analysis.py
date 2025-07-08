@@ -240,4 +240,4 @@ def psth(
                     ),
                 )
 
-    return res / (n_channels * n_bins)
+    return res / (n_channels * len(digital_intervals))
