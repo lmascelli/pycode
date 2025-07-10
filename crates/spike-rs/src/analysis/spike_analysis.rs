@@ -425,11 +425,11 @@ pub mod logisi {
             1f32 - (min_val) / (intra_value * peak_2_val).sqrt()
         };
 
-        // get the index of the remaining peaks in the found_peaks array and check if the intra_peak
-        // wasn't the last peak;
-        if last_peak_index == found_peaks.0.len() as isize - 1 {
-            return Err(super::SpikeError::LogISICalcThresholdIntraAtEndOfPeaks);
-        }
+        // // get the index of the remaining peaks in the found_peaks array and check if the intra_peak
+        // // wasn't the last peak;
+        // if last_peak_index == found_peaks.0.len() as isize - 1 {
+        //     return Err(super::SpikeError::LogISICalcThresholdIntraAtEndOfPeaks);
+        // }
 
         // advance to the next peak
         last_peak_index += 1;
