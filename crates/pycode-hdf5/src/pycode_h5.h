@@ -24,9 +24,7 @@ typedef enum phaseh5_error {
     OK = 0,
 
     // pycodeh5_init
-
     INIT_CREATE_STRING_TYPE_FAIL,
-
     OPEN_FAIL,
     CLOSE_FILE_FAIL,
     FLUSH_FAIL,
@@ -34,6 +32,8 @@ typedef enum phaseh5_error {
     OPEN_DATE_ATTRIBUTE_FAIL,
     READ_DATE_ATTRIBUTE_FAIL,
     OPEN_DATE_DATATYPE_FAIL,
+	COUNT_ANALOGS_FAIL,
+	OPEN_ANALOG_CALLBACK_FAIL,
     OPEN_ALLOCATE_ANALOGS_FAIL,
     OPEN_ANALOG_GROUP_FAIL,
     OPEN_INFO_CHANNEL_DATASET_FAIL,
@@ -53,6 +53,8 @@ typedef enum phaseh5_error {
     OPEN_CHANNEL_DATA_DATASPACE_FAIL,
     GET_CHANNEL_DATA_DIMS_FAIL,
     NO_RAW_DATA_STREAM,
+	COUNT_EVENTS_FAIL,
+	OPEN_EVENT_CALLBACK_FAIL,
     OPEN_EVENT_STREAM_GROUP_LINK_FAIL,
     OPEN_EVENT_STREAM_GROUP_FAIL,
     OPEN_EVENT_STREAM_STREAM_0_GROUP_LINK_FAIL,
@@ -189,7 +191,7 @@ typedef struct PhaseH5 {
     AnalogStream raw_data;
     bool has_digital;
     AnalogStream digital;
-    int n_events;
+    size_t n_events;
     hid_t event_entities[MAX_EVENT_STREAMS];
     hid_t peaks_group;
 } PhaseH5;
@@ -228,4 +230,3 @@ phaseh5_error events(PhaseH5* phase, size_t index, LLONG_TYPE* buf);
 phaseh5_error peak_train_len(PhaseH5*, size_t group, const char* label, size_t* len);
 phaseh5_error peak_train(PhaseH5* phase, size_t group, const char* label, PeakTrain* peak_train);
 phaseh5_error set_peak_train(PhaseH5* phase, size_t group, const char* label, const PeakTrain* peak_train);
-

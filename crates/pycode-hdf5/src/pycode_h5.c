@@ -6,6 +6,8 @@
 hid_t InfoChannelMemoryType;
 hid_t HDF5StringType;
 
+#define _USE(X) (void)(X)
+
 #define CAST(X, Y) (Y)(X)
 #define LOG {									\
   printf("Log: %s:%d\n", __FILE__, __LINE__);	\
@@ -87,6 +89,9 @@ typedef struct CallbackAnalogsRets {
 /// count the number of analog groups in the AnalogStreams group
 herr_t count_analogs_callback(hid_t group, const char *name,
                               const H5L_info2_t *info, void *op_data) {
+  _USE(group);
+  _USE(name);
+  _USE(info);
   *((int *)op_data) += 1;
   return 0;
 }
@@ -179,6 +184,7 @@ phaseh5_error open_analog(AnalogStream *analog_stream,
 /// parse an analog
 herr_t open_analogs_callback(hid_t group, const char *name,
                              const H5L_info2_t *info, void *analogs_rets) {
+  _USE(info);
   hid_t analog_stream_group = H5Gopen2(group, name, H5P_DEFAULT);
   if (analog_stream_group <= 0) {
     return OPEN_ANALOG_GROUP_FAIL;
@@ -216,6 +222,8 @@ herr_t count_events_callback(hid_t group, const char *name,
                sizeof("EventEntity_") / sizeof(char) - 1)) {
     *((int *)op_data) += 1;
   }
+  _USE(group);
+  _USE(info);
   return 0;
 }
 
@@ -226,6 +234,7 @@ typedef struct CallbackEventsRets {
 
 herr_t open_events_callback(hid_t group, const char *name,
                             const H5L_info2_t *info, void *events_rets) {
+  _USE(info);
   if (!strncmp(name, "EventEntity_",
                sizeof("EventEntity_") / sizeof(char) - 1)) {
     CallbackEventsRets *events_rets_c = CAST(events_rets, CallbackEventsRets *);
@@ -294,7 +303,7 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
   res = H5Literate2(analog_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL,
                     count_analogs_callback, (void *)(&n_analogs));
   if (res != 0) {
-    return res;
+    return COUNT_ANALOGS_FAIL;
   }
 
   AnalogStream *analog_streams =
@@ -312,7 +321,7 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
   res = H5Literate2(analog_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL,
                     open_analogs_callback, (void *)&callback_ret);
   if (res != 0) {
-    return res;
+    return OPEN_ANALOG_CALLBACK_FAIL;
   }
 
   size_t raw_data_index;
@@ -320,8 +329,10 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
   bool raw_data_set = false;
   bool digital_set = false;
 
-  float sampling_frequency = -1;
-  long datalen = -1;
+  float sampling_frequency = 0.;
+  bool sampling_frequency_set = false;
+  size_t datalen = 0;
+  bool datalen_set = false; 
 
   for (long int i = 0; i < n_analogs; ++i) {
     // test that there is only a raw data stream and only a digital stream
@@ -334,7 +345,8 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
         return MULTIPLE_DIGITAL_STREAMS;
       }
       // test that all the channels have the same sampling frequency
-      if (sampling_frequency == -1) {
+      if (!sampling_frequency_set) {
+		sampling_frequency_set = true;
         sampling_frequency = analog_streams[i].info_channels[0].tick * 100;
       } else if (sampling_frequency !=
                  analog_streams[i].info_channels[0].tick * 100) {
@@ -349,10 +361,11 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
         return MULTIPLE_RAW_DATA_STREAMS;
       }
       // test that all the channels have the same sampling frequency
-      if (sampling_frequency == -1) {
+      if (!sampling_frequency_set) {
+		sampling_frequency_set = true;
         sampling_frequency = analog_streams[i].info_channels[0].tick * 100;
       } else {
-        for (int j = 0; j < analog_streams[i].n_channels; ++j) {
+        for (hsize_t j = 0; j < analog_streams[i].n_channels; ++j) {
           if (sampling_frequency !=
               analog_streams[i].info_channels[j].tick * 100) {
             return MULTIPLE_SAMPLING_FREQUENCIES;
@@ -362,7 +375,8 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
     }
 
     // test that all the channels have the same datalen
-    if (datalen == -1) {
+    if (!datalen_set) {
+	  datalen_set = true;
       datalen = analog_streams[i].datalen;
     } else {
       if (datalen != analog_streams[i].datalen) {
@@ -423,8 +437,8 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
 
       res = H5Literate2(events_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL,
                         count_events_callback, &phase->n_events);
-      if (res != OK) {
-        return res;
+      if (res != 0) {
+        return COUNT_EVENTS_FAIL;
       }
 
       CallbackEventsRets events_rets;
@@ -432,8 +446,8 @@ phaseh5_error phase_open(PhaseH5 *phase, const char *filename) {
       res = H5Literate2(events_group, H5_INDEX_NAME, H5_ITER_NATIVE, NULL,
                         open_events_callback, &events_rets);
 
-	  if (res != OK) {
-        return res;
+	  if (res != 0) {
+        return OPEN_EVENT_CALLBACK_FAIL;
       }
 
       for (int i = 0; i < events_rets.current_index; ++i) {
@@ -471,7 +485,7 @@ phaseh5_error phase_close(PhaseH5 *phase) {
   if (phase->has_digital) {
     close_analog(&phase->digital);
   }
-  for (int i = 0; i < phase->n_events; i++) {
+  for (size_t i = 0; i < phase->n_events; i++) {
     res = H5Dclose(phase->event_entities[i]);
     if (res < 0) {
       return EVENT_ENTITY_DATASET_CLOSE_FAIL;
@@ -698,7 +712,7 @@ phaseh5_error events(PhaseH5 *phase, size_t index, LLONG_TYPE *buf) {
     return EVENTS_INDEX_OUT_OF_BOUNDS;
   }
   hsize_t dim;
-  herr_t res = events_len(phase, index, &dim);
+  phaseh5_error res = events_len(phase, index, &dim);
   if (res != OK) {
     return res;
   }
@@ -710,9 +724,9 @@ phaseh5_error events(PhaseH5 *phase, size_t index, LLONG_TYPE *buf) {
   }
   hsize_t start[] = {0, 0};
   hsize_t count[] = {1, dim};
-  res = H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET, start, NULL, count,
+  herr_t op_res = H5Sselect_hyperslab(file_dataspace, H5S_SELECT_SET, start, NULL, count,
                             NULL);
-  if (res < 0) {
+  if (op_res < 0) {
     return EVENTS_SELECT_DATASPACE_HYPERSLAB_FAIL;
   }
 
@@ -723,10 +737,10 @@ phaseh5_error events(PhaseH5 *phase, size_t index, LLONG_TYPE *buf) {
     return EVENTS_CREATE_MEMORY_DATASPACE_FAIL;
   }
 
-  res = H5Dread(events_dataset, H5T_NATIVE_LONG, memory_dataspace,
+  op_res = H5Dread(events_dataset, H5T_NATIVE_LONG, memory_dataspace,
                 file_dataspace, H5P_DEFAULT, buf);
 
-  if (res < 0) {
+  if (op_res < 0) {
     return EVENTS_READ_DATASET_FAIL;
   }
 
@@ -746,10 +760,6 @@ phaseh5_error open_peak_train_datasets(PhaseH5 *phase, size_t group, const char 
   if (phase->peaks_group == 0) {
     return PEAK_TRAIN_NO_PEAK_GROUP;
   }
-
-  // Create the path string of the peak train datasets of that label
-  hsize_t values_len;
-  hsize_t samples_len;
 
   char peak_train_group_str[MAX_GROUP_STRING_LEN] = {0};
   char values_group_str[MAX_GROUP_STRING_LEN] = {0};
@@ -807,9 +817,9 @@ phaseh5_error peak_train_len(PhaseH5 *phase, size_t group, const char *label,
   hid_t samples_ds;
 
   // Open the peak train datasets of LABEL channel
-  herr_t res = open_peak_train_datasets(phase, group, label, &values_ds, &samples_ds);
-  if (res != OK) {
-    return res;
+  phaseh5_error op_res = open_peak_train_datasets(phase, group, label, &values_ds, &samples_ds);
+  if (op_res != OK) {
+    return op_res;
   }
 
   hsize_t values_len[1];
@@ -821,7 +831,7 @@ phaseh5_error peak_train_len(PhaseH5 *phase, size_t group, const char *label,
     return PEAK_TRAIN_LEN_OPEN_VALUES_DATASPACE_FAIL;
   }
 
-  res = H5Sget_simple_extent_dims(values_dataspace, values_len, NULL);
+  herr_t res = H5Sget_simple_extent_dims(values_dataspace, values_len, NULL);
   if (res < 0) {
     return PEAK_TRAIN_LEN_GET_VALUES_DATASPACE_DIM_FAIL;
   }
@@ -879,9 +889,9 @@ phaseh5_error peak_train(PhaseH5 *phase, size_t group, const char *label,
   // Open peak dataset
   hid_t values_ds;
   hid_t samples_ds;
-  herr_t res = open_peak_train_datasets(phase, group, label, &values_ds, &samples_ds);
-  if (res != OK) {
-    return res;
+  phaseh5_error op_res = open_peak_train_datasets(phase, group, label, &values_ds, &samples_ds);
+  if (op_res != OK) {
+    return op_res;
   }
 
   // Create memory dataspace
@@ -893,7 +903,7 @@ phaseh5_error peak_train(PhaseH5 *phase, size_t group, const char *label,
   }
 
   // Read the datasets
-  res = H5Dread(values_ds, H5T_NATIVE_FLOAT, memory_dataspace, H5S_ALL,
+  herr_t res = H5Dread(values_ds, H5T_NATIVE_FLOAT, memory_dataspace, H5S_ALL,
                 H5P_DEFAULT, peak_train->values);
   if (res < 0) {
     return PEAK_TRAIN_READ_VALUES_DATASET_FAIL;

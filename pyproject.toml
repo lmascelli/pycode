@@ -25,4 +25,5 @@ dependencies = [
 ]
 
 [tool.maturin]
+manifest-path = "crates/pycode/Cargo.toml"
 features = ["pyo3/extension-module"]

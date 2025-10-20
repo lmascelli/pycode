@@ -1,0 +1,15 @@
+[package]
+name = "cpycode"
+version = "0.1.0"
+edition = "2024"
+build = "build.rs"
+
+[lib]
+name = "cpycode"
+crate-type = ["staticlib"]
+
+[dependencies]
+pycode-hdf5 = { path = "../pycode-hdf5" }
+
+[build-dependencies]
+cbindgen = "*"

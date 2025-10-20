@@ -1,0 +1,13 @@
+[package]
+name = "pycode"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "pycode"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = "*"
+spike_rs = { path="../spike-rs" }
+pycode-hdf5 = { path="../pycode-hdf5" }

@@ -1,19 +1,7 @@
 [workspace]
 members = [
-        "crates/spike-rs",
-        "crates/pycode-hdf5/",
+  "crates/spike-rs",
+  "crates/pycode-hdf5",
+  "crates/cpycode",
+  "crates/pycode",
 ]
-
-[package]
-name = "pycode-rs"
-version = "0.1.0"
-edition = "2024"
-
-[lib]
-name = "pycode"
-crate-type = ["cdylib"]
-
-[dependencies]
-pyo3 = "*"
-spike_rs = { path="crates/spike-rs" }
-pycode-hdf5 = { path="crates/pycode-hdf5" }

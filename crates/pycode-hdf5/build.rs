@@ -2,70 +2,55 @@ use std::env;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let hdf5_include_dir = env::var("HDF5_INCLUDE_DIR")
-        .expect("Please set the `HDF5_INCLUDE_DIR` environment variable");
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+
+    // **********************************************************************
+    // compile the C part of the library and link it with the hdf5 library
+    // **********************************************************************
+    println!("cargo:rerun-if-changed=../src/pycode_h5.c");
+    println!("cargo:rerun-if-changed=../src/pycode_h5.h");
+
+    let hdf5_include_dir = PathBuf::from(env::var("HDF5_INCLUDE_DIR")
+        .expect("Please set the `HDF5_INCLUDE_DIR` environment variable"));
     let hdf5_lib_dir =
-        env::var("HDF5_LIB_DIR").expect("Please set the `HDF5_LIB_DIR` environment variable");
-    // let hdf5_bin_dir =
-    //     env::var("HDF5_BIN_DIR").expect("Please set the `HDF5_BIN_DIR` environment variable");
+        PathBuf::from(env::var("HDF5_LIB_DIR")
+            .expect("Please set the `HDF5_LIB_DIR` environment variable"));
+    // let hdf5_static_lib = hdf5_lib_dir.join("libhdf5.a");
 
-    println!("cargo:rerun-if-changed=../../c_pycode/pycode_h5.c");
-    println!("cargo:rerun-if-changed=../../c_pycode/pycode_h5.h");
-    println!("cargo:rerun-if-changed=../../c_pycode/CMakeLists.txt");
+    cc::Build::new()
+        .file("src/pycode_h5.c")
+        .include(hdf5_include_dir.clone())
+        //.object(hdf5_static_lib)
+        .compile("pycode_h5");
 
-    let mut build = cmake::Config::new("../../c_pycode");
-    let c_pycode_location = build.profile("Release").build();
-
+    
     // **********************************************************************
     // use BINDGEN to generate binding to c_pycode
     // **********************************************************************
     let bindings = bindgen::Builder::default()
-        .header("../../c_pycode/pycode_h5.h")
-        .clang_arg(format!("-I{}", hdf5_include_dir))
+        .header("src/pycode_h5.h")
+        .clang_arg(format!("-I{}", hdf5_include_dir.display()))
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings");
-
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings");
 
+    
+    // **********************************************************************
+    // tell the compiler what to link and where it is 
+    // **********************************************************************
     println!(
         "cargo:rustc-link-search=native={}/lib",
-        c_pycode_location.display()
+        out_path.display()
     );
     println!("cargo:rustc-link-lib=static=pycode_h5");
-    println!("cargo:rustc-link-search=native={hdf5_lib_dir}");
-    println!("cargo:rustc-link-lib=dylib=hdf5");
-
-    // let hdf5_bin_dir = PathBuf::from(hdf5_bin_dir);
-    // let out_dir = env::var("OUT_DIR").unwrap();
-    // let mut target_dir = PathBuf::from(out_dir);
-
-    // // Traverse up the directory tree to reach the `target` directory
-    // target_dir.pop(); // remove "out_dir"
-    // target_dir.pop(); // remove "build"
-    // target_dir.pop(); // remove <project-name>
-    // target_dir.pop(); // remove "debug" or "release"
-    // target_dir.pop(); // remove "target"
-
-    // #[cfg(target_os = "windows")]
-    // {
-    //     std::fs::copy(
-    //         hdf5_bin_dir.join("hdf5.dll"),
-    //         target_dir.join("pycode.libs/hdf5.dll"),
-    //     )
-    //     .expect("failed to copy hdf5.dll");
-    // }
-    // #[cfg(target_os = "linux")]
-    // {
-    //     std::fs::copy(
-    //         hdf5_bin_dir.join("libhdf5.so"),
-    //         target_dir.join("pycode.libs/libhdf5.so"),
-    //     )
-    //     .expect("failed to copy libhdf5.so");
-    // }
+    println!("cargo:rustc-link-search=native={}", hdf5_lib_dir.display());
+    println!("cargo:rustc-link-lib=static=hdf5");
+    println!("cargo:rustc-link-lib=static=zlib-static");
+    println!("cargo:rustc-link-lib=static=szaec");
+    println!("cargo:rustc-link-lib=static=aec");
     Ok(())
 }

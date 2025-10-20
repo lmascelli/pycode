@@ -3,7 +3,7 @@ use super::error::Error;
 use super::peak_train::PeakTrain;
 use super::sys;
 use spike_rs::error::SpikeError;
-pub use spike_rs::types::PhaseTrait;
+use spike_rs::types::PhaseTrait;
 use std::ffi::CString;
 
 pub struct Phase {
