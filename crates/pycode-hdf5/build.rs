@@ -50,7 +50,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:rustc-link-search=native={}", hdf5_lib_dir.display());
     println!("cargo:rustc-link-lib=static=hdf5");
     println!("cargo:rustc-link-lib=static=zlib-static");
+    #[cfg(target_os = "windows")]
     println!("cargo:rustc-link-lib=static=szaec");
+    #[cfg(target_os = "windows")]
+    println!("cargo:rustc-link-lib=static=aec");
+    #[cfg(not(target_os = "windows"))]
+    println!("cargo:rustc-link-lib=static=szaec");
+    #[cfg(not(target_os = "windows"))]
     println!("cargo:rustc-link-lib=static=aec");
     Ok(())
 }
