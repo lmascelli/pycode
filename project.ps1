@@ -1,8 +1,8 @@
 # PLEASE USE ABSOLUTE PATHS
 if ($IsLinux) {
-    $env:HDF5_LIB_DIR = "/home/leonardo/Documents/unige/hdf5/1.14.5/lib"
-    $env:HDF5_INCLUDE_DIR = "/home/leonardo/Documents/unige/hdf5/1.14.5/include"
-    $env:HDF5_BIN_DIR = "/home/leonardo/Documents/unige/hdf5/1.14.5/lib"
+    $env:HDF5_LIB_DIR = "/usr/lib"
+    $env:HDF5_INCLUDE_DIR = "/usr/include"
+    $env:HDF5_BIN_DIR = "/usr/lib"
 } else {
     $env:HDF5_LIB_DIR = "C:/Users/Leonardo/Documents/unige/hdf5/1.14.5/lib"
     $env:HDF5_INCLUDE_DIR = "C:/Users/Leonardo/Documents/unige/hdf5/1.14.5/include"
