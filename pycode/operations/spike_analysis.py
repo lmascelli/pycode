@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 import numpy as np
-
+import itertools
 from ..pycode import (
     PyChannel,
     PyPhase,
@@ -9,6 +9,7 @@ from ..pycode import (
 )
 
 from .digital import get_digital_intervals
+from pycode.operations.cleaning import clear_peaks_over_threshold, clear_peaks_around_points
 
 
 def count_peaks_in_intervals(
@@ -136,51 +137,6 @@ def mfr_trend(
         return (mfr_trend, mfr_interval_starts, mfr_interval_type)
 
 
-def channel_psth(
-    phase: PyPhase,
-    channel: PyChannel,
-    bin_time_duration: float,
-    psth_duration: float,
-    digital_intervals: List[Tuple[int, int]],
-) -> np.ndarray:
-    """
-    Compute the PSTH of a channel and returns a list with the count of the
-    spikes in each bin averaged by the length of the psth.
-
-    @Parameters
-    - phase: the Phase of interest
-    - channel
-    - bin_time_duration: the duration of the bin IN SECONDS
-    - psth_duration: the duration of the whole psth IN SECONDS
-    - digital_intervals: the list of (start, end) intervals
-    """
-
-    # OPEN THE PYCODE_RS HANDLER FOR THE DATA
-    sampling_frequency = phase.sampling_frequency()
-    bin_size = int(
-        sampling_frequency * bin_time_duration
-    )  # this round the size of a bin to the lower integer
-
-    n_bins = int(psth_duration / bin_time_duration)  # number of bin after the stimulus
-
-    global res
-    res = np.zeros(n_bins)  # variable to accumulate the psth
-
-    peak_times, _ = phase.peak_train(channel, None, None)
-
-    for interval in digital_intervals:
-        found_peaks = subsample_range(
-                peak_times,
-                interval[0],
-                bin_size,
-                n_bins,
-            )
-        res = np.add(
-            res,
-            found_peaks,
-        )
-
-    return res  # TODO: average by n_bins     --> Code here: / n_bins
 
 
 def psth(
@@ -241,3 +197,71 @@ def psth(
                 )
 
     return res / (n_channels * len(digital_intervals) * bin_time_duration)
+
+
+def psth_single_channel(phase,
+                        channel,
+                        bin_duration,
+                        psth_duration,
+                        threshold = None,
+                        cleaning_window_half_size = None):
+
+    """
+    Compute the PSTH for a given channel 
+    
+    ----------
+    
+    Parameters
+    ----------
+    phase : PyPhase
+        
+    channel : PyChannel
+        
+    bin_duration : float
+        (in seconds).
+    psth_duration : float
+        (in seconds).
+    threshold : float
+        Threshold over which a spike is considered an artifact 
+        (in Volt).
+    
+    -------
+    Returns
+    -------
+    np.ndarray
+
+    """
+    
+    sf = phase.sampling_frequency()
+    bin_size = int(sf * bin_duration)
+    n_bins = int(psth_duration / bin_duration)
+    
+    if phase.n_digitals() != 1:
+        print("no digital signal")
+        return None 
+    
+    digital = phase.digital(0)
+    intervals = get_digital_intervals(digital)
+    
+    if len(intervals) == 0:
+        print("no intervals found")
+        return None
+    
+    pt, pv = phase.peak_train(channel)
+    if threshold is not None:
+        pt, pv = clear_peaks_over_threshold(pt, pv, threshold)
+    if cleaning_window_half_size is not None:
+        pt, pv = clear_peaks_around_points(pt,
+                                           pv,
+                                           list(itertools.chain.from_iterable(intervals)),
+                                           cleaning_window_half_size
+                                           )
+    res = np.zeros(n_bins)
+    for interval in intervals:
+        res += subsample_range(pt, interval[0], bin_size, n_bins)
+
+    return res / (len(intervals) * bin_duration)
+
+
+
+
