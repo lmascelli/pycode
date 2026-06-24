@@ -294,18 +294,18 @@ pub fn spike_detection_new_core(
 
     // Here it is allocated the storage for the return values of peak times an
     // amplitude. For increasing performance the maximum number of possible peaks
-    // that can be found has been reserved. If there is exactly one peak every
+    // that can be found has been reserved. If there was exactly one peak every
     // PEAK_DISTANCE and the minimum distance of a peak is 2 samples the maximum
     // number of peaks will be:
     //
     //
     //      MIN PEAK DURATION                            OTHER PEAK DURATION
-    //      --                                           -----------
+    //       --                                           -----------
     //      ^                                            ^
     // ... -------------------------------------------------------------- ... ...
     //     |    v                                      |              v
     //     |   |                                       |    |
-    // ... |---------------- | ------------------------| ---------------- ... ...
+    // ... |-- | ------------------------------------------| ---------------- ... ...
     //    PEAK  DURATION        PEAK DISTANCE           PEAK DURATION
     //
     //---------------------------------------------------------------------------

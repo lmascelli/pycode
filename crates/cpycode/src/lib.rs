@@ -1,7 +1,7 @@
 use pycode_hdf5::channel::Channel;
 use pycode_hdf5::phase::{Phase, PhaseTrait};
-use std::ffi::{c_char, c_void};
 use std::ffi::{CStr, CString};
+use std::ffi::{c_char, c_void};
 use std::ptr::null_mut;
 
 #[unsafe(no_mangle)]
@@ -98,7 +98,7 @@ pub extern "C" fn cpycode_phase_raw_data(
             &Channel {
                 index: 0,
                 label: String::from(
-                    // SAFETY: the program will panic with an explaination if the conversion 
+                    // SAFETY: the program will panic with an explaination if the conversion
                     // of the label pointer is not valid
                     unsafe { CStr::from_ptr(label) }
                         .to_str()

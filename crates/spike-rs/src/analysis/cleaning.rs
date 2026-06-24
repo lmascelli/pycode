@@ -1,6 +1,7 @@
-/// Find the peaks that fall in the interval [point - window_half_size, point + window_half_size]
-/// for each point passed. For optimization purposes it assume that the peaks and the points are
-/// sorted in ascending order. It return the indices of the found peaks.
+/// Find the peaks that fall in the interval
+/// [point - window_half_size, point + window_half_size]
+/// for each point passed. For optimization purposes it assume that the peaks and
+/// the points are sorted in ascending order. It return the indices of the found peaks.
 
 pub fn find_peaks_around_points(
     peak_times: &[usize],

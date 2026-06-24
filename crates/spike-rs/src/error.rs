@@ -16,6 +16,7 @@ pub enum SpikeError {
     SpikeDetectionTooFewSamples,
     NoSpikeTrainsAvailable,
     OperationFailed,
+    NoThreadAvailable,
 
     LogISITooFewSamples,
     LogISICalcThresholdNoIntraIndex,

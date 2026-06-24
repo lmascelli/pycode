@@ -14,7 +14,7 @@ pub trait ChannelTrait {
     }
 }
 
-/// PhaseHandler
+/// PhaseTrait
 ///
 /// Trait for handling a phase recording
 /// Any implementer must provide access to the phase information and
