@@ -2,6 +2,7 @@
 .venv/
 Cargo.lock
 build.el
+project.ps1
 /spike-rs/Cargo.lock
 /pycode/*.pyd
 /pycode/*.so
